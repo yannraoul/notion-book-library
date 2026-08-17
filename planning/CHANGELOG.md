@@ -21,3 +21,4 @@ is just the index.
 - [NBLB-5](bugs/NBLB-5.md) — bottom nav bar didn't extend to the bottom of the screen like the Habits app
 - [NBLB-6](bugs/NBLB-6.md) — cover mode threw "MobileScannerController is already running" (regression from NBLB-3)
 - [NBLB-7](bugs/NBLB-7.md) — cover-mode UX: square guide, no OCR preview, "search manually" looked like an error, stale OCR text
+- [NBLB-8](bugs/NBLB-8.md) — barcode-mode tuning: scanWindow, EAN-13-only formats, torch toggle

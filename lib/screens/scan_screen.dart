@@ -44,7 +44,11 @@ class ScanScreen extends ConsumerStatefulWidget {
 }
 
 class _ScanScreenState extends ConsumerState<ScanScreen> {
-  final _controller = MobileScannerController(returnImage: true);
+  // Restricted to EAN-13 since that's the only symbology a book ISBN
+  // barcode uses (our own detection filter already assumes it) — mostly a
+  // minor decode-efficiency win, not expected to rescue a barcode Vision
+  // can't parse at all, per NBLB-8's investigation.
+  final _controller = MobileScannerController(returnImage: true, formats: const [BarcodeFormat.ean13]);
   final _lookupService = BookLookupService();
   final _textRecognizer = TextRecognizer();
   final _recentIsbns = <String>{};
@@ -219,62 +223,98 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      MobileScanner(
-                        controller: _controller,
-                        errorBuilder: (context, error) {
-                          debugPrint('ScanScreen: camera init error: ${error.errorCode} ${error.errorDetails?.message}');
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Barcode mode restricts native analysis to the same
+                      // rect the guide box shows — excludes surrounding
+                      // clutter/glare instead of scanning the full frame.
+                      // Cover mode needs the whole frame (OCR reads more
+                      // than what's in the guide), so no window there.
+                      final scanWindow = _mode == _ScanMode.barcode
+                          ? Rect.fromCenter(center: constraints.biggest.center(Offset.zero), width: 220, height: 220)
+                          : null;
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          MobileScanner(
+                            controller: _controller,
+                            scanWindow: scanWindow,
+                            errorBuilder: (context, error) {
+                              debugPrint('ScanScreen: camera init error: ${error.errorCode} ${error.errorDetails?.message}');
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Text(
+                                    l10n.scanCameraError(error.errorDetails?.message ?? error.errorCode.name),
+                                    style: const TextStyle(color: Colors.white),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: tokens.accent.withValues(alpha: 0.7), width: 2),
+                              borderRadius: BorderRadius.circular(AppSpacing.settingsCardRadius),
+                            ),
+                            // Cover mode frames a portrait book cover, not a
+                            // square barcode target — a square guide made it
+                            // hard to center a rectangular cover.
+                            width: _mode == _ScanMode.cover ? 190 : 220,
+                            height: _mode == _ScanMode.cover ? 270 : 220,
+                          ),
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: ValueListenableBuilder<MobileScannerState>(
+                              valueListenable: _controller,
+                              builder: (context, state, _) {
+                                final torchOn = state.torchState == TorchState.on;
+                                return GestureDetector(
+                                  onTap: () => _controller.toggleTorch(),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: torchOn ? tokens.accent : Colors.black.withValues(alpha: 0.4),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(torchOn ? Icons.flash_on : Icons.flash_off, color: Colors.white, size: 20),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          if (_mode == _ScanMode.cover)
+                            Positioned(
+                              bottom: 20,
+                              child: GestureDetector(
+                                onTap: _captureCover,
+                                child: Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    border: Border.all(color: tokens.accent, width: 3),
+                                  ),
+                                  child: _busy
+                                      ? const Padding(padding: EdgeInsets.all(18), child: CircularProgressIndicator(strokeWidth: 2))
+                                      : null,
+                                ),
+                              ),
+                            ),
+                          if (_showHint)
+                            Positioned(
+                              bottom: _mode == _ScanMode.cover ? 96 : 20,
                               child: Text(
-                                l10n.scanCameraError(error.errorDetails?.message ?? error.errorCode.name),
-                                style: const TextStyle(color: Colors.white),
-                                textAlign: TextAlign.center,
+                                l10n.scanHint,
+                                style: TextStyle(color: tokens.accent, fontSize: 13, fontWeight: FontWeight.w600),
                               ),
                             ),
-                          );
-                        },
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: tokens.accent.withValues(alpha: 0.7), width: 2),
-                          borderRadius: BorderRadius.circular(AppSpacing.settingsCardRadius),
-                        ),
-                        // Cover mode frames a portrait book cover, not a
-                        // square barcode target — a square guide made it
-                        // hard to center a rectangular cover.
-                        width: _mode == _ScanMode.cover ? 190 : 220,
-                        height: _mode == _ScanMode.cover ? 270 : 220,
-                      ),
-                      if (_mode == _ScanMode.cover)
-                        Positioned(
-                          bottom: 20,
-                          child: GestureDetector(
-                            onTap: _captureCover,
-                            child: Container(
-                              width: 64,
-                              height: 64,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
-                                border: Border.all(color: tokens.accent, width: 3),
-                              ),
-                              child: _busy ? const Padding(padding: EdgeInsets.all(18), child: CircularProgressIndicator(strokeWidth: 2)) : null,
-                            ),
-                          ),
-                        ),
-                      if (_showHint)
-                        Positioned(
-                          bottom: _mode == _ScanMode.cover ? 96 : 20,
-                          child: Text(
-                            l10n.scanHint,
-                            style: TextStyle(color: tokens.accent, fontSize: 13, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
