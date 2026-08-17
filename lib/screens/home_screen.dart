@@ -13,6 +13,7 @@ import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
 import 'manual_entry_screen.dart';
+import 'manual_search_screen.dart';
 import 'scan_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -628,6 +629,13 @@ class _AddFab extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanScreen()));
+              },
+            ),
+            ListTile(
+              title: Text(l10n.addSheetSearch, style: TextStyle(color: tokens.text, fontWeight: FontWeight.w600)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManualSearchScreen()));
               },
             ),
             ListTile(

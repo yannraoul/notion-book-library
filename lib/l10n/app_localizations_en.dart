@@ -76,6 +76,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addSheetScan => 'Scan a book';
 
   @override
+  String get addSheetSearch => 'Search for a book';
+
+  @override
   String get addSheetManual => 'Add manually';
 
   @override

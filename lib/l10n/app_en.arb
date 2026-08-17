@@ -31,6 +31,7 @@
   "emptyManual": "or add manually",
 
   "addSheetScan": "Scan a book",
+  "addSheetSearch": "Search for a book",
   "addSheetManual": "Add manually",
 
   "scanCancel": "Cancel",

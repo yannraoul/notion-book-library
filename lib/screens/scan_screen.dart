@@ -182,6 +182,24 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   void _setMode(_ScanMode mode) {
     setState(() => _mode = mode);
     _armHintTimer();
+    if (mode == _ScanMode.cover) {
+      // A barcode-mode session that never finds anything can leave
+      // mobile_scanner's native frame-analysis loop stuck — no further
+      // frames get delivered at all, even after switching modes, which is
+      // what made cover capture hang for the full timeout then fail
+      // (NBLB-9 didn't fully explain it). A stop/start cycle forces a
+      // clean analyzer state before the user gets a chance to tap capture.
+      unawaited(_restartCamera());
+    }
+  }
+
+  Future<void> _restartCamera() async {
+    try {
+      await _controller.stop();
+      await _controller.start();
+    } catch (e) {
+      debugPrint('ScanScreen: camera restart on mode switch failed: $e');
+    }
   }
 
   @override

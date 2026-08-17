@@ -224,6 +224,12 @@ abstract class AppLocalizations {
   /// **'Scan a book'**
   String get addSheetScan;
 
+  /// No description provided for @addSheetSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for a book'**
+  String get addSheetSearch;
+
   /// No description provided for @addSheetManual.
   ///
   /// In en, this message translates to:
