@@ -3,9 +3,9 @@ import '../models/book.dart';
 import '../services/notion_api.dart';
 
 /// Translates between Notion's `Books*`/`Authors*`/`Genres*` databases and
-/// the app's own [Book] model. Read-only — Shelf never writes
-/// `Status`/`Current page`/`Date started`/`Date finished`/`Rating`, that's
-/// permanently Habits' job.
+/// the app's own [Book] model, and orchestrates creating new `Books*` rows
+/// (NBLM-6). Never writes `Status`/`Current page`/`Date started`/`Date
+/// finished`/`Rating`, that's permanently Habits' job.
 class BooksRepository {
   final NotionApi api;
   final BooksCache cache;
@@ -57,6 +57,90 @@ class BooksRepository {
     } catch (_) {
       return cache.readBooks();
     }
+  }
+
+  /// Resolves author names to `Authors*` relation ids — matches existing
+  /// rows case/whitespace-insensitively, creates a new row for any name
+  /// not found. Authors are create-or-link, unlike genres.
+  Future<List<String>> resolveAuthorIds(String token, String authorsDbId, List<String> authorNames) async {
+    final existing = await api.queryRelationNames(token, authorsDbId);
+    final ids = <String>[];
+    for (final name in authorNames) {
+      final match = existing.entries.firstWhere(
+        (entry) => entry.value.trim().toLowerCase() == name.trim().toLowerCase(),
+        orElse: () => const MapEntry('', ''),
+      );
+      if (match.key.isNotEmpty) {
+        ids.add(match.key);
+      } else {
+        ids.add(await api.createRelationPage(token, authorsDbId, name.trim()));
+      }
+    }
+    return ids;
+  }
+
+  /// Resolves genre display names to `Genres*` relation ids. Only ever
+  /// matches existing rows — the genre list is fixed/closed, so a name with
+  /// no match is a real bug (the UI only ever offers picks from that same
+  /// fixed list) rather than something to silently skip.
+  Future<List<String>> resolveGenreIds(String token, String genresDbId, List<String> genreNames) async {
+    final existing = await api.queryRelationNames(token, genresDbId);
+    return genreNames.map((name) {
+      final match = existing.entries.firstWhere(
+        (entry) => entry.value == name,
+        orElse: () => throw StateError('No Genres* row named "$name" — the fixed genre list is out of sync with Notion.'),
+      );
+      return match.key;
+    }).toList();
+  }
+
+  /// Creates a new `Books*` row and writes it into the cache. Returns the
+  /// resulting [Book] built from the fields we already know we wrote —
+  /// no re-fetch needed.
+  Future<Book> createBook({
+    required String token,
+    required String booksDbId,
+    required String authorsDbId,
+    required String genresDbId,
+    required String title,
+    String? subtitle,
+    String? isbn,
+    int? pages,
+    DateTime? publishedDate,
+    String? coverUrl,
+    String? apiCategories,
+    List<String> authorNames = const [],
+    List<String> genreNames = const [],
+  }) async {
+    final authorIds = await resolveAuthorIds(token, authorsDbId, authorNames);
+    final genreIds = await resolveGenreIds(token, genresDbId, genreNames);
+    final id = await api.createBookPage(
+      token,
+      booksDbId: booksDbId,
+      title: title,
+      subtitle: subtitle,
+      isbn: isbn,
+      pages: pages,
+      publishedDate: publishedDate,
+      coverUrl: coverUrl,
+      apiCategories: apiCategories,
+      authorPageIds: authorIds,
+      genrePageIds: genreIds,
+    );
+    final book = Book(
+      id: id,
+      title: title,
+      subtitle: subtitle,
+      authors: authorNames,
+      isbn: isbn,
+      pages: pages,
+      publishedDate: publishedDate,
+      coverUrl: coverUrl,
+      apiCategories: apiCategories,
+      genres: genreNames,
+    );
+    await cache.insertBook(book);
+    return book;
   }
 
   Book _toBook(NotionBookRecord r, Map<String, String> authorNames, Map<String, String> genreNames) {

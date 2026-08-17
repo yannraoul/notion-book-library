@@ -26,6 +26,13 @@ class BooksCache {
     });
   }
 
+  /// Adds a single newly-created book without touching the rest of the
+  /// cached table — unlike [writeBooks], which always replaces everything.
+  Future<void> insertBook(Book book) async {
+    final db = await _appDb.database;
+    await db.insert('books', _row(book));
+  }
+
   Future<List<Book>> readBooks() async {
     final db = await _appDb.database;
     final rows = await db.query('books');

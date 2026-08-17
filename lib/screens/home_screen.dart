@@ -10,6 +10,7 @@ import '../providers/theme_provider.dart';
 import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
+import 'manual_entry_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -230,7 +231,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           TextButton(
-            onPressed: () => _showComingSoon(context, l10n),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManualEntryScreen())),
             child: Text(l10n.emptyManual, style: TextStyle(color: tokens.accent, fontSize: 13.5)),
           ),
         ],
@@ -377,7 +378,7 @@ class _AddFab extends StatelessWidget {
               title: Text(l10n.addSheetManual, style: TextStyle(color: tokens.text, fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(context);
-                _showComingSoon(context, l10n);
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManualEntryScreen()));
               },
             ),
           ],

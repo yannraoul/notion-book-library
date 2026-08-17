@@ -5,9 +5,11 @@ import 'package:http/http.dart' as http;
 import '../models/book.dart';
 
 /// Thin wrapper over the Notion REST API. Covers the connection check
-/// (NBLM-3) and reading the `Books*`/`Authors*`/`Genres*` databases
-/// (NBLM-4). Read-only — Shelf never writes `Status`/`Current page`/
-/// `Date started`/`Date finished`/`Rating`, that stays Habits' job forever.
+/// (NBLM-3), reading the `Books*`/`Authors*`/`Genres*` databases (NBLM-4),
+/// and writing new `Books*`/`Authors*` pages (NBLM-6). Never writes
+/// `Status`/`Current page`/`Date started`/`Date finished`/`Rating` on
+/// `Books*` — that stays Habits' job forever — and never creates a new
+/// `Genres*` row, since that list is fixed/closed.
 class NotionApi {
   static const _baseUrl = 'https://api.notion.com/v1';
   // Pinned so response shapes don't shift under us without a deliberate bump.
@@ -72,6 +74,122 @@ class NotionApi {
     final pages = await _queryAll(token, databaseId, body: const {});
     return {for (final page in pages) page['id'] as String: _plainTitle(page['properties']['Name'])};
   }
+
+  /// Notion's built-in vector icons (not emoji/file) — same ones already on
+  /// every row Yann created from his own templates, confirmed live against
+  /// his workspace (`book-closed`/gray on `Books*`, `user`/gray on
+  /// `Authors*`). Setting `icon.type: "icon"` works even pinned to the
+  /// 2022-06-28 API version — confirmed live via a direct PATCH.
+  static const _bookIcon = {
+    'type': 'icon',
+    'icon': {'name': 'book-closed', 'color': 'gray'},
+  };
+  static const _authorIcon = {
+    'type': 'icon',
+    'icon': {'name': 'user', 'color': 'gray'},
+  };
+
+  /// Creates a new page in [databaseId] with the given Notion [properties]
+  /// map (already shaped per-property, e.g. via the `_...Property` helpers
+  /// below) — `POST /v1/pages`. Returns the new page's id.
+  Future<String> createPage(
+    String token,
+    String databaseId,
+    Map<String, dynamic> properties, {
+    Map<String, dynamic>? icon,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$_baseUrl/pages'),
+      headers: _headers(token),
+      body: jsonEncode({
+        'parent': {'database_id': databaseId},
+        'properties': properties,
+        'icon': ?icon,
+      }),
+    );
+    _throwIfError(response);
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return body['id'] as String;
+  }
+
+  /// Creates a bare title-only page — used for a new `Authors*` row.
+  /// `Genres*` is never created this way; that list is fixed/closed.
+  Future<String> createRelationPage(String token, String databaseId, String name) {
+    return createPage(token, databaseId, {'Name': _titleProperty(name)}, icon: _authorIcon);
+  }
+
+  /// Creates a new `Books*` row. Only ever writes the fields Shelf owns
+  /// (see the class doc comment) — [authorPageIds]/[genrePageIds] must
+  /// already be resolved relation ids, not names.
+  Future<String> createBookPage(
+    String token, {
+    required String booksDbId,
+    required String title,
+    String? subtitle,
+    String? isbn,
+    int? pages,
+    DateTime? publishedDate,
+    String? coverUrl,
+    String? apiCategories,
+    List<String> authorPageIds = const [],
+    List<String> genrePageIds = const [],
+  }) {
+    return createPage(token, booksDbId, {
+      'Name': _titleProperty(title),
+      'Subtitle': _richTextProperty(subtitle),
+      'ISBN': _richTextProperty(isbn),
+      'Pages': _numberProperty(pages),
+      'Date published': _dateProperty(publishedDate),
+      'Cover': _externalFileProperty(coverUrl),
+      'API categories/subjects': _richTextProperty(apiCategories),
+      'Authors': _relationProperty(authorPageIds),
+      'Genres': _relationProperty(genrePageIds),
+    }, icon: _bookIcon);
+  }
+
+  Map<String, dynamic> _titleProperty(String text) => {
+        'title': [
+          {
+            'text': {'content': text},
+          },
+        ],
+      };
+
+  Map<String, dynamic> _richTextProperty(String? text) => {
+        'rich_text': text == null || text.isEmpty
+            ? []
+            : [
+                {
+                  'text': {'content': text},
+                },
+              ],
+      };
+
+  Map<String, dynamic> _numberProperty(num? value) => {'number': value};
+
+  Map<String, dynamic> _dateProperty(DateTime? date) => {
+        'date': date == null
+            ? null
+            : {'start': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'},
+      };
+
+  Map<String, dynamic> _relationProperty(List<String> pageIds) => {
+        'relation': pageIds.map((id) => {'id': id}).toList(),
+      };
+
+  /// Cover can only be written as an `external` file — Shelf has no backend
+  /// to host an uploaded image against, so callers only ever pass a URL.
+  Map<String, dynamic> _externalFileProperty(String? url) => {
+        'files': url == null || url.isEmpty
+            ? []
+            : [
+                {
+                  'name': 'cover',
+                  'type': 'external',
+                  'external': {'url': url},
+                },
+              ],
+      };
 
   /// Pages through `POST /v1/databases/{id}/query` until `has_more` is
   /// false, returning raw page objects.

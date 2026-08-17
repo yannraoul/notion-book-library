@@ -178,7 +178,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get fieldGenres => 'Genres';
 
   @override
+  String get fieldCoverUrlHint => 'URL de l’image de couverture (facultatif)';
+
+  @override
   String get saveBook => 'Enregistrer';
+
+  @override
+  String get manualEntrySaving => 'Enregistrement…';
+
+  @override
+  String manualEntryError(String message) {
+    return 'Impossible d’enregistrer : $message';
+  }
 
   @override
   String get detailBack => '‹ Retour';

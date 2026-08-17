@@ -410,11 +410,29 @@ abstract class AppLocalizations {
   /// **'Genres'**
   String get fieldGenres;
 
+  /// No description provided for @fieldCoverUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover image URL (optional)'**
+  String get fieldCoverUrlHint;
+
   /// No description provided for @saveBook.
   ///
   /// In en, this message translates to:
   /// **'Save book'**
   String get saveBook;
+
+  /// No description provided for @manualEntrySaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get manualEntrySaving;
+
+  /// No description provided for @manualEntryError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save: {message}'**
+  String manualEntryError(String message);
 
   /// No description provided for @detailBack.
   ///

@@ -80,7 +80,13 @@
   "fieldCover": "Couverture",
   "fieldAuthors": "Auteurs",
   "fieldGenres": "Genres",
+  "fieldCoverUrlHint": "URL de l’image de couverture (facultatif)",
   "saveBook": "Enregistrer",
+  "manualEntrySaving": "Enregistrement…",
+  "manualEntryError": "Impossible d’enregistrer : {message}",
+  "@manualEntryError": {
+    "placeholders": {"message": {"type": "String"}}
+  },
 
   "detailBack": "‹ Retour",
   "detailIsbn": "ISBN",

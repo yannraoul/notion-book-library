@@ -80,7 +80,13 @@
   "fieldCover": "Cover",
   "fieldAuthors": "Authors",
   "fieldGenres": "Genres",
+  "fieldCoverUrlHint": "Cover image URL (optional)",
   "saveBook": "Save book",
+  "manualEntrySaving": "Saving…",
+  "manualEntryError": "Couldn't save: {message}",
+  "@manualEntryError": {
+    "placeholders": {"message": {"type": "String"}}
+  },
 
   "detailBack": "‹ Back",
   "detailIsbn": "ISBN",
