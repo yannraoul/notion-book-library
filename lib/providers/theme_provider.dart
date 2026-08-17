@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../services/app_icon.dart';
 import '../services/settings_storage.dart';
 import '../theme/color_tokens.dart';
 
@@ -22,6 +23,7 @@ class AppThemeNotifier extends Notifier<AppTheme> {
   Future<void> setTheme(AppTheme theme) async {
     state = theme;
     await _storage.write(_themeStorageKey, theme.name);
+    await setAppIcon(theme);
   }
 }
 

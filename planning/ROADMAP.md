@@ -17,3 +17,4 @@ something is NBLM vs NBLB, etc).
 - [NBLM-4](features/NBLM-4.md) — Real Notion-backed book data
 - [NBLM-5](features/NBLM-5.md) — Settings preferences (theme + language)
 - [NBLM-6](features/NBLM-6.md) — Manual book entry + Notion write path
+- [NBLM-8](features/NBLM-8.md) — Multi-theme app icon (light/dark)
