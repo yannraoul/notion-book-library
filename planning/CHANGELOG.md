@@ -19,3 +19,4 @@ is just the index.
 - [NBLB-3](bugs/NBLB-3.md) — iOS scan pipeline: barcode never detected, cover capture silently fails
 - [NBLB-4](bugs/NBLB-4.md) — search confidence ranked author-name-in-title above the real title
 - [NBLB-5](bugs/NBLB-5.md) — bottom nav bar didn't extend to the bottom of the screen like the Habits app
+- [NBLB-6](bugs/NBLB-6.md) — cover mode threw "MobileScannerController is already running" (regression from NBLB-3)

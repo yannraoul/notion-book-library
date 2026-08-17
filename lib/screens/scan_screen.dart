@@ -21,20 +21,20 @@ import 'queue_screen.dart';
 
 enum _ScanMode { barcode, cover }
 
-/// Design screens 03/04 — the scan viewfinder. Two
-/// [MobileScannerController]s, one per mode — only one is ever mounted in
-/// a [MobileScanner] widget at a time, so switching modes auto-starts and
-/// auto-stops the right one (confirmed by reading the package source: the
-/// widget starts/stops whatever controller it's given on mount/unmount,
-/// even when the controller was constructed externally). Barcode mode uses
-/// `returnImage: false` — it never needs the frame image, and per
-/// mobile_scanner's own changelog `returnImage: true` has a real per-frame
-/// encoding cost on both platforms, which is worth avoiding for the mode
-/// that has to run continuously. Cover-photo mode uses `returnImage: true`
-/// since it needs the latest frame's bytes on a capture tap, to run
-/// on-device OCR on it. Camera capture itself can't be exercised on
-/// `flutter run -d windows` (see `CLAUDE.md`) — unverified until the
-/// Codemagic/Sideloadly loop.
+/// Design screens 03/04 — the scan viewfinder. A single
+/// [MobileScannerController] (`returnImage: true`) serves both modes:
+/// barcode mode reads `capture.barcodes` (fires on every analyzed frame,
+/// confirmed by reading the package source — not just on a hit),
+/// cover-photo mode grabs the latest frame's `capture.image` bytes on a
+/// capture tap and runs on-device OCR on it. This *must* stay a single
+/// controller: `MobileScannerController` holds the native camera session
+/// through a process-wide static owner field (confirmed by reading the
+/// package source), so starting a second controller before the first has
+/// fully released it throws "already running" — tried splitting this into
+/// a controller per mode to avoid the `returnImage` cost in barcode mode,
+/// and that's exactly what broke (see NBLB-6). Camera capture itself can't
+/// be exercised on `flutter run -d windows` (see `CLAUDE.md`) — unverified
+/// until the Codemagic/Sideloadly loop.
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
 
@@ -43,8 +43,7 @@ class ScanScreen extends ConsumerStatefulWidget {
 }
 
 class _ScanScreenState extends ConsumerState<ScanScreen> {
-  final _barcodeController = MobileScannerController(returnImage: false);
-  final _coverController = MobileScannerController(returnImage: true);
+  final _controller = MobileScannerController(returnImage: true);
   final _lookupService = BookLookupService();
   final _textRecognizer = TextRecognizer();
   final _recentIsbns = <String>{};
@@ -55,24 +54,20 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   bool _showHint = false;
   bool _busy = false;
   Timer? _hintTimer;
-  StreamSubscription<BarcodeCapture>? _barcodeSubscription;
-  StreamSubscription<BarcodeCapture>? _coverSubscription;
+  StreamSubscription<BarcodeCapture>? _subscription;
 
   @override
   void initState() {
     super.initState();
-    _barcodeSubscription = _barcodeController.barcodes.listen(_onBarcodeCapture, onError: _onScanError);
-    _coverSubscription = _coverController.barcodes.listen(_onCoverCapture, onError: _onScanError);
+    _subscription = _controller.barcodes.listen(_onCapture, onError: _onScanError);
     _armHintTimer();
   }
 
   @override
   void dispose() {
     _hintTimer?.cancel();
-    _barcodeSubscription?.cancel();
-    _coverSubscription?.cancel();
-    _barcodeController.dispose();
-    _coverController.dispose();
+    _subscription?.cancel();
+    _controller.dispose();
     _textRecognizer.close();
     super.dispose();
   }
@@ -91,20 +86,24 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     });
   }
 
-  void _onBarcodeCapture(BarcodeCapture capture) {
-    if (_busy) return;
+  void _onCapture(BarcodeCapture capture) {
+    _lastCapture = capture;
+    if (_mode != _ScanMode.barcode || _busy) return;
+    if (capture.barcodes.isEmpty) return;
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
+      // Log every raw detection (format + value + length), not just ones
+      // that pass the ISBN filter below — this is the only way to tell,
+      // from a future device run, whether Vision is detecting nothing at
+      // all vs. detecting something the filter then rejects (e.g. a
+      // shorter/longer payload than a plain EAN-13, or a non-EAN format).
+      debugPrint('ScanScreen: detected barcode format=${barcode.format} raw=$raw');
       if (raw == null) continue;
       if (!(raw.startsWith('978') || raw.startsWith('979')) || raw.length != 13) continue;
       if (!_recentIsbns.add(raw)) continue;
       _lookupIsbn(raw);
       break;
     }
-  }
-
-  void _onCoverCapture(BarcodeCapture capture) {
-    _lastCapture = capture;
   }
 
   Future<void> _lookupIsbn(String isbn) async {
@@ -207,8 +206,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                     alignment: Alignment.center,
                     children: [
                       MobileScanner(
-                        key: ValueKey(_mode),
-                        controller: _mode == _ScanMode.barcode ? _barcodeController : _coverController,
+                        controller: _controller,
                         errorBuilder: (context, error) {
                           debugPrint('ScanScreen: camera init error: ${error.errorCode} ${error.errorDetails?.message}');
                           return Center(
