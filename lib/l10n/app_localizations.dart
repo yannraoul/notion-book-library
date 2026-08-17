@@ -578,6 +578,36 @@ abstract class AppLocalizations {
   /// **'Disconnect'**
   String get settingsDisconnect;
 
+  /// No description provided for @settingsNotionTokenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notion integration token'**
+  String get settingsNotionTokenHint;
+
+  /// No description provided for @settingsConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get settingsConnect;
+
+  /// No description provided for @settingsConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get settingsConnecting;
+
+  /// No description provided for @settingsAccessibleDatabases.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessible databases'**
+  String get settingsAccessibleDatabases;
+
+  /// No description provided for @settingsNoDatabasesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No databases shared with this integration yet.'**
+  String get settingsNoDatabasesFound;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:

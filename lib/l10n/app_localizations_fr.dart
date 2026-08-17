@@ -263,6 +263,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsDisconnect => 'Se déconnecter';
 
   @override
+  String get settingsNotionTokenHint => 'Jeton d’intégration Notion';
+
+  @override
+  String get settingsConnect => 'Connecter';
+
+  @override
+  String get settingsConnecting => 'Connexion…';
+
+  @override
+  String get settingsAccessibleDatabases => 'Bases de données accessibles';
+
+  @override
+  String get settingsNoDatabasesFound =>
+      'Aucune base de données partagée avec cette intégration.';
+
+  @override
   String get settingsLanguage => 'Langue';
 
   @override

@@ -260,6 +260,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsDisconnect => 'Disconnect';
 
   @override
+  String get settingsNotionTokenHint => 'Notion integration token';
+
+  @override
+  String get settingsConnect => 'Connect';
+
+  @override
+  String get settingsConnecting => 'Connecting…';
+
+  @override
+  String get settingsAccessibleDatabases => 'Accessible databases';
+
+  @override
+  String get settingsNoDatabasesFound =>
+      'No databases shared with this integration yet.';
+
+  @override
   String get settingsLanguage => 'Language';
 
   @override
