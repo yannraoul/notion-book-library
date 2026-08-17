@@ -14,4 +14,4 @@ is just the index.
 
 ## Bugs
 
-None yet.
+- [NBLB-1](bugs/NBLB-1.md) — iOS CocoaPods build failure (deployment target too low for google_mlkit_commons)
