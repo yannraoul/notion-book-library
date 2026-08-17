@@ -19,13 +19,11 @@ forgotten:
 - **Rating import from external sources.** Ratings stay owned by Habits
   (read-only in Shelf) — no external rating API integration planned.
 
-## Open reconciliation: Genre list mismatch
+## Resolved: genre list mismatch
 
-`docs/Backlog shelf.md`'s Notion `Genres` db list (Fantasy, Science-fiction,
-Finances, Personal development, Productivity, Business, LitRPG) doesn't match
-`design/design_handoff_shelf/README.md`'s 8-genre color list (Fiction,
-Sci-Fi, Fantasy, Business, Self-Help, Non-Fiction, Biography, History) baked
-into the hi-fi prototype and ported into `lib/theme/color_tokens.dart`'s
-`genreHues` map. Needs a real decision — genres are a Shelf-owned Notion
-relation, so this has to resolve to one concrete list — before the
-genre-confirm screen (NBLM-x, not yet scoped) is implemented.
+Was: `docs/Backlog shelf.md`'s Notion `Genres` db list didn't match the
+design prototype's 8-genre color list baked into `color_tokens.dart`.
+Resolved by NBLM-4 — checked the real `Genres*` database live, it matches
+`docs/Backlog shelf.md`'s original list exactly (LitRPG, Fantasy,
+Science-Fiction, Finances, Personal Development, Productivity, Business).
+`genreHues` now keys off these real names.

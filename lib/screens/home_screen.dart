@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/book.dart';
-import '../models/genre.dart';
 import '../providers/books_provider.dart';
+import '../providers/nav_provider.dart';
+import '../providers/notion_connection_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
@@ -17,13 +18,13 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final tokens = ref.watch(colorTokensProvider(MediaQuery.platformBrightnessOf(context)));
-    final books = ref.watch(booksProvider);
+    final connection = ref.watch(notionConnectionProvider);
+    final booksAsync = connection is NotionConnected ? ref.watch(booksProvider) : null;
+    final hasBooks = booksAsync?.valueOrNull?.isNotEmpty ?? false;
 
     return Scaffold(
       backgroundColor: tokens.bg,
-      floatingActionButton: books.isEmpty
-          ? null
-          : _AddFab(tokens: tokens, l10n: l10n),
+      floatingActionButton: hasBooks ? _AddFab(tokens: tokens, l10n: l10n) : null,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -40,11 +41,65 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
-          if (books.isNotEmpty) _TabsRow(tokens: tokens, l10n: l10n),
+          if (hasBooks) _TabsRow(tokens: tokens, l10n: l10n),
           Expanded(
-            child: books.isEmpty
-                ? _EmptyState(tokens: tokens, l10n: l10n)
-                : _BookGrid(tokens: tokens, l10n: l10n, books: books),
+            child: connection is! NotionConnected
+                ? _NotConnectedState(tokens: tokens, l10n: l10n)
+                : booksAsync!.when(
+                    loading: () => Center(child: CircularProgressIndicator(color: tokens.accent)),
+                    error: (error, stackTrace) => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          l10n.homeLoadError('$error'),
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodyMuted(tokens.muted),
+                        ),
+                      ),
+                    ),
+                    data: (books) => books.isEmpty
+                        ? _EmptyState(tokens: tokens, l10n: l10n)
+                        : _BookGrid(tokens: tokens, books: books),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotConnectedState extends ConsumerWidget {
+  final AppColorTokens tokens;
+  final AppLocalizations l10n;
+  const _NotConnectedState({required this.tokens, required this.l10n});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 60),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            l10n.homeNotConnected,
+            textAlign: TextAlign.center,
+            style: AppTypography.bodyMuted(tokens.muted),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => ref.read(selectedTabProvider.notifier).state = 1,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: tokens.accent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius),
+                ),
+              ),
+              child: Text(l10n.navSettings, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            ),
           ),
         ],
       ),
@@ -186,9 +241,8 @@ class _EmptyState extends StatelessWidget {
 
 class _BookGrid extends StatelessWidget {
   final AppColorTokens tokens;
-  final AppLocalizations l10n;
   final List<Book> books;
-  const _BookGrid({required this.tokens, required this.l10n, required this.books});
+  const _BookGrid({required this.tokens, required this.books});
 
   @override
   Widget build(BuildContext context) {
@@ -206,16 +260,15 @@ class _BookGrid extends StatelessWidget {
         childAspectRatio: 0.52,
       ),
       itemCount: books.length,
-      itemBuilder: (context, i) => _BookTile(tokens: tokens, l10n: l10n, book: books[i]),
+      itemBuilder: (context, i) => _BookTile(tokens: tokens, book: books[i]),
     );
   }
 }
 
 class _BookTile extends StatelessWidget {
   final AppColorTokens tokens;
-  final AppLocalizations l10n;
   final Book book;
-  const _BookTile({required this.tokens, required this.l10n, required this.book});
+  const _BookTile({required this.tokens, required this.book});
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +285,7 @@ class _BookTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              genreLabel(l10n, book.primaryGenre),
+              book.primaryGenre,
               style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
             ),
           ),
@@ -245,7 +298,7 @@ class _BookTile extends StatelessWidget {
           style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: tokens.text),
         ),
         Text(
-          book.author,
+          book.authors.join(', '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(fontSize: 10.5, color: tokens.muted),

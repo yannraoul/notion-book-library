@@ -14,3 +14,4 @@ something is NBLM vs NBLB, etc).
 - [NBLM-1](features/NBLM-1.md) — Project scaffolding
 - [NBLM-2](features/NBLM-2.md) — Home screen (shelf grid + empty state), sample data
 - [NBLM-3](features/NBLM-3.md) — Notion connection settings
+- [NBLM-4](features/NBLM-4.md) — Real Notion-backed book data

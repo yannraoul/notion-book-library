@@ -9,6 +9,12 @@
   "tabGenre": "Par genre",
   "tabRecent": "Récents",
 
+  "homeNotConnected": "Connectez-vous à Notion dans les réglages pour voir votre étagère.",
+  "homeLoadError": "Impossible de charger vos livres : {message}",
+  "@homeLoadError": {
+    "placeholders": {"message": {"type": "String"}}
+  },
+
   "filterByGenre": "Filtrer par genre",
   "apply": "Appliquer",
   "cancel": "Annuler",
@@ -127,15 +133,6 @@
   "themeVertRouge": "Vert & rouge",
   "themeAmbreArdoise": "Ambre & ardoise",
   "themeSarcelleRouille": "Sarcelle & rouille",
-
-  "genreFiction": "Fiction",
-  "genreScifi": "Science-fiction",
-  "genreFantasy": "Fantasy",
-  "genreBusiness": "Affaires",
-  "genreSelfhelp": "Développement perso",
-  "genreNonfiction": "Non-fiction",
-  "genreBiography": "Biographie",
-  "genreHistory": "Histoire",
 
   "comingSoon": "Pas encore disponible"
 }

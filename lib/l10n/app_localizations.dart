@@ -134,6 +134,18 @@ abstract class AppLocalizations {
   /// **'Recent'**
   String get tabRecent;
 
+  /// No description provided for @homeNotConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Notion in Settings to see your shelf.'**
+  String get homeNotConnected;
+
+  /// No description provided for @homeLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your books: {message}'**
+  String homeLoadError(String message);
+
   /// No description provided for @filterByGenre.
   ///
   /// In en, this message translates to:
@@ -685,54 +697,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Teal & rust'**
   String get themeSarcelleRouille;
-
-  /// No description provided for @genreFiction.
-  ///
-  /// In en, this message translates to:
-  /// **'Fiction'**
-  String get genreFiction;
-
-  /// No description provided for @genreScifi.
-  ///
-  /// In en, this message translates to:
-  /// **'Sci-Fi'**
-  String get genreScifi;
-
-  /// No description provided for @genreFantasy.
-  ///
-  /// In en, this message translates to:
-  /// **'Fantasy'**
-  String get genreFantasy;
-
-  /// No description provided for @genreBusiness.
-  ///
-  /// In en, this message translates to:
-  /// **'Business'**
-  String get genreBusiness;
-
-  /// No description provided for @genreSelfhelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Self-Help'**
-  String get genreSelfhelp;
-
-  /// No description provided for @genreNonfiction.
-  ///
-  /// In en, this message translates to:
-  /// **'Non-Fiction'**
-  String get genreNonfiction;
-
-  /// No description provided for @genreBiography.
-  ///
-  /// In en, this message translates to:
-  /// **'Biography'**
-  String get genreBiography;
-
-  /// No description provided for @genreHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'History'**
-  String get genreHistory;
 
   /// No description provided for @comingSoon.
   ///

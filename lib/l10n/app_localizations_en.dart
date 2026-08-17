@@ -27,6 +27,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabRecent => 'Recent';
 
   @override
+  String get homeNotConnected =>
+      'Connect to Notion in Settings to see your shelf.';
+
+  @override
+  String homeLoadError(String message) {
+    return 'Couldn\'t load your books: $message';
+  }
+
+  @override
   String get filterByGenre => 'Filter by genre';
 
   @override
@@ -314,30 +323,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeSarcelleRouille => 'Teal & rust';
-
-  @override
-  String get genreFiction => 'Fiction';
-
-  @override
-  String get genreScifi => 'Sci-Fi';
-
-  @override
-  String get genreFantasy => 'Fantasy';
-
-  @override
-  String get genreBusiness => 'Business';
-
-  @override
-  String get genreSelfhelp => 'Self-Help';
-
-  @override
-  String get genreNonfiction => 'Non-Fiction';
-
-  @override
-  String get genreBiography => 'Biography';
-
-  @override
-  String get genreHistory => 'History';
 
   @override
   String get comingSoon => 'Not built yet';

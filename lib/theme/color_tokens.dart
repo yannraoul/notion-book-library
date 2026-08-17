@@ -107,24 +107,24 @@ final Map<AppTheme, _ThemePair> _themePairs = {
 
 /// Genres get a fixed cover color, independent of theme/light-dark mode —
 /// Shelf's own use of color, distinct from the accent/secondary system
-/// above. Hue values from `design/design_handoff_shelf/README.md`.
-///
-/// NOTE: this genre id/hue list (from the design prototype) doesn't match
-/// `docs/Backlog shelf.md`'s Notion `Genres` db list (Fantasy,
-/// Science-fiction, Finances, Personal development, Productivity, Business,
-/// LitRPG) — see `planning/BACKLOG.md` for the open reconciliation item.
+/// above. Keyed by the real `Genres*` db row names (confirmed live,
+/// NBLM-4) — genre names are already human-readable text from Notion, not
+/// app copy, so there's no separate id/label split like the design
+/// prototype's placeholder 8-genre set had.
 const Map<String, double> genreHues = {
-  'fiction': 260,
-  'scifi': 195,
-  'fantasy': 300,
-  'business': 90,
-  'selfhelp': 20,
-  'nonfiction': 230,
-  'biography': 350,
-  'history': 140,
+  'Fantasy': 300,
+  'Science-Fiction': 195,
+  'LitRPG': 265,
+  'Finances': 140,
+  'Personal Development': 70,
+  'Productivity': 230,
+  'Business': 20,
 };
 
-Color genreColor(String genreId) {
-  final hue = genreHues[genreId] ?? 0;
+/// Falls back to a hash-derived hue for any genre not in [genreHues] —
+/// e.g. a new one Yann adds in Notion later — rather than flattening every
+/// unmapped genre to the same color.
+Color genreColor(String genreName) {
+  final hue = genreHues[genreName] ?? (genreName.hashCode.abs() % 360).toDouble();
   return oklch(0.5, 0.1, hue);
 }

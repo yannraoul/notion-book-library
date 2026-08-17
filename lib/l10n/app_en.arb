@@ -9,6 +9,12 @@
   "tabGenre": "By genre",
   "tabRecent": "Recent",
 
+  "homeNotConnected": "Connect to Notion in Settings to see your shelf.",
+  "homeLoadError": "Couldn't load your books: {message}",
+  "@homeLoadError": {
+    "placeholders": {"message": {"type": "String"}}
+  },
+
   "filterByGenre": "Filter by genre",
   "apply": "Apply",
   "cancel": "Cancel",
@@ -127,15 +133,6 @@
   "themeVertRouge": "Green & red",
   "themeAmbreArdoise": "Amber & slate",
   "themeSarcelleRouille": "Teal & rust",
-
-  "genreFiction": "Fiction",
-  "genreScifi": "Sci-Fi",
-  "genreFantasy": "Fantasy",
-  "genreBusiness": "Business",
-  "genreSelfhelp": "Self-Help",
-  "genreNonfiction": "Non-Fiction",
-  "genreBiography": "Biography",
-  "genreHistory": "History",
 
   "comingSoon": "Not built yet"
 }

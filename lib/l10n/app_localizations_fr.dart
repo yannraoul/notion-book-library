@@ -27,6 +27,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tabRecent => 'Récents';
 
   @override
+  String get homeNotConnected =>
+      'Connectez-vous à Notion dans les réglages pour voir votre étagère.';
+
+  @override
+  String homeLoadError(String message) {
+    return 'Impossible de charger vos livres : $message';
+  }
+
+  @override
   String get filterByGenre => 'Filtrer par genre';
 
   @override
@@ -317,30 +326,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get themeSarcelleRouille => 'Sarcelle & rouille';
-
-  @override
-  String get genreFiction => 'Fiction';
-
-  @override
-  String get genreScifi => 'Science-fiction';
-
-  @override
-  String get genreFantasy => 'Fantasy';
-
-  @override
-  String get genreBusiness => 'Affaires';
-
-  @override
-  String get genreSelfhelp => 'Développement perso';
-
-  @override
-  String get genreNonfiction => 'Non-fiction';
-
-  @override
-  String get genreBiography => 'Biographie';
-
-  @override
-  String get genreHistory => 'Histoire';
 
   @override
   String get comingSoon => 'Pas encore disponible';
