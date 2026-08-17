@@ -25,8 +25,9 @@ enum _ScanMode { barcode, cover }
 /// [MobileScannerController] (`returnImage: true`) serves both modes:
 /// barcode mode reads `capture.barcodes` (fires on every analyzed frame,
 /// confirmed by reading the package source — not just on a hit),
-/// cover-photo mode grabs the latest frame's `capture.image` bytes on a
-/// capture tap and runs on-device OCR on it. This *must* stay a single
+/// cover-photo mode waits for the next frame delivered *after* a capture
+/// tap (not whatever frame the analyzer last cached — see NBLB-7) and
+/// runs on-device OCR on its `capture.image` bytes. This *must* stay a single
 /// controller: `MobileScannerController` holds the native camera session
 /// through a process-wide static owner field (confirmed by reading the
 /// package source), so starting a second controller before the first has
@@ -49,12 +50,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   final _recentIsbns = <String>{};
 
   _ScanMode _mode = _ScanMode.barcode;
-  BarcodeCapture? _lastCapture;
   int _scannedCount = 0;
   bool _showHint = false;
   bool _busy = false;
   Timer? _hintTimer;
   StreamSubscription<BarcodeCapture>? _subscription;
+  Completer<BarcodeCapture>? _freshFrameRequest;
 
   @override
   void initState() {
@@ -87,7 +88,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   void _onCapture(BarcodeCapture capture) {
-    _lastCapture = capture;
+    final pendingFrame = _freshFrameRequest;
+    if (pendingFrame != null && !pendingFrame.isCompleted) {
+      pendingFrame.complete(capture);
+    }
     if (_mode != _ScanMode.barcode || _busy) return;
     if (capture.barcodes.isEmpty) return;
     for (final barcode in capture.barcodes) {
@@ -129,10 +133,20 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   Future<void> _captureCover() async {
-    final image = _lastCapture?.image;
-    if (image == null || _busy) return;
+    if (_busy) return;
     setState(() => _busy = true);
     try {
+      // Wait for a frame delivered strictly after this tap, instead of
+      // reusing whatever the analyzer last cached: frame delivery is
+      // throttled (`detectionTimeoutMs`), so a cached frame from just
+      // before a quick reframe/mode-switch could otherwise still show
+      // whatever the camera was pointed at a moment earlier.
+      final request = Completer<BarcodeCapture>();
+      _freshFrameRequest = request;
+      final capture = await request.future.timeout(const Duration(seconds: 3));
+      final image = capture.image;
+      if (image == null) throw StateError('captured frame had no image bytes');
+
       final file = await File(
         '${Directory.systemTemp.path}/shelf_cover_${DateTime.now().microsecondsSinceEpoch}.jpg',
       ).writeAsBytes(image);
@@ -141,6 +155,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       final guess = recognized.text.trim();
+      debugPrint('ScanScreen: OCR guess (${guess.length} chars): $guess');
       if (guess.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scanCoverNoText)));
         return;
@@ -152,6 +167,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         setState(() => _busy = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scanCoverCaptureFailed)));
       }
+    } finally {
+      _freshFrameRequest = null;
     }
   }
 
@@ -226,8 +243,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                           border: Border.all(color: tokens.accent.withValues(alpha: 0.7), width: 2),
                           borderRadius: BorderRadius.circular(AppSpacing.settingsCardRadius),
                         ),
-                        width: 220,
-                        height: 220,
+                        // Cover mode frames a portrait book cover, not a
+                        // square barcode target — a square guide made it
+                        // hard to center a rectangular cover.
+                        width: _mode == _ScanMode.cover ? 190 : 220,
+                        height: _mode == _ScanMode.cover ? 270 : 220,
                       ),
                       if (_mode == _ScanMode.cover)
                         Positioned(

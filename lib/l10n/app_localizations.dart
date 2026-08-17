@@ -308,6 +308,18 @@ abstract class AppLocalizations {
   /// **'Which book did you scan?'**
   String get ocrTitle;
 
+  /// No description provided for @ocrReadLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Text read from the cover:'**
+  String get ocrReadLabel;
+
+  /// No description provided for @ocrNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No matches found for that text.'**
+  String get ocrNoMatches;
+
   /// No description provided for @ocrNone.
   ///
   /// In en, this message translates to:

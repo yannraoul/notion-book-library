@@ -131,6 +131,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ocrTitle => 'Quel livre avez-vous scanné ?';
 
   @override
+  String get ocrReadLabel => 'Texte lu sur la couverture :';
+
+  @override
+  String get ocrNoMatches => 'Aucune correspondance trouvée pour ce texte.';
+
+  @override
   String get ocrNone => 'Aucun de ceux-ci — recherche manuelle';
 
   @override

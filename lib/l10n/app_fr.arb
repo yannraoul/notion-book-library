@@ -63,6 +63,8 @@
   "statusNeedsGenre": "genre ?",
 
   "ocrTitle": "Quel livre avez-vous scanné ?",
+  "ocrReadLabel": "Texte lu sur la couverture :",
+  "ocrNoMatches": "Aucune correspondance trouvée pour ce texte.",
   "ocrNone": "Aucun de ceux-ci — recherche manuelle",
   "manualSearchLabel": "Lecture OCR (modifiez si erronée) :",
 

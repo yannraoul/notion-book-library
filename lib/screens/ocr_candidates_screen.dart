@@ -72,11 +72,48 @@ class _OcrCandidatesScreenState extends ConsumerState<OcrCandidatesScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
               child: Text(l10n.ocrTitle, style: TextStyle(color: tokens.text, fontSize: 19, fontWeight: FontWeight.w700)),
             ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.ocrReadLabel, style: TextStyle(color: tokens.muted, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: tokens.surface,
+                      borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius),
+                      border: Border.all(color: tokens.border),
+                    ),
+                    child: Text(
+                      widget.ocrGuess.isEmpty ? '—' : widget.ocrGuess,
+                      style: TextStyle(color: tokens.text, fontSize: 13.5),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 14),
             Expanded(
               child: _results == null
                   ? Center(child: CircularProgressIndicator(color: tokens.accent))
-                  : ListView.separated(
+                  : _results!.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
+                            child: Text(
+                              l10n.ocrNoMatches,
+                              style: TextStyle(color: tokens.muted, fontSize: 13.5),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
                       itemCount: _results!.length,
                       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.listGap),
@@ -123,12 +160,19 @@ class _OcrCandidatesScreenState extends ConsumerState<OcrCandidatesScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.screenHorizontalPadding),
-              child: Center(
-                child: TextButton(
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (_) => ManualSearchScreen(initialQuery: widget.ocrGuess)),
                   ),
-                  child: Text(l10n.ocrNone, style: TextStyle(color: tokens.alert)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: tokens.text,
+                    side: BorderSide(color: tokens.border),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius)),
+                  ),
+                  child: Text(l10n.ocrNone, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 ),
               ),
             ),

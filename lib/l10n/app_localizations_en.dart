@@ -130,6 +130,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ocrTitle => 'Which book did you scan?';
 
   @override
+  String get ocrReadLabel => 'Text read from the cover:';
+
+  @override
+  String get ocrNoMatches => 'No matches found for that text.';
+
+  @override
   String get ocrNone => 'None of these — search manually';
 
   @override
