@@ -34,6 +34,12 @@
   "modeCover": "Cover photo",
   "scanHint": "No barcode found — try \"Cover photo\" above",
   "tapToScan": "Tap to simulate a scan",
+  "scanCameraError": "Camera error: {message}",
+  "@scanCameraError": {
+    "placeholders": {"message": {"type": "String"}}
+  },
+  "scanCoverCaptureFailed": "Couldn't capture the cover photo — try again.",
+  "scanCoverNoText": "Couldn't read any text on that cover — try again or search manually.",
 
   "scannedCount": "{count} scanned",
   "@scannedCount": {

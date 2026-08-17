@@ -242,6 +242,24 @@ abstract class AppLocalizations {
   /// **'Tap to simulate a scan'**
   String get tapToScan;
 
+  /// No description provided for @scanCameraError.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera error: {message}'**
+  String scanCameraError(String message);
+
+  /// No description provided for @scanCoverCaptureFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t capture the cover photo — try again.'**
+  String get scanCoverCaptureFailed;
+
+  /// No description provided for @scanCoverNoText.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read any text on that cover — try again or search manually.'**
+  String get scanCoverNoText;
+
   /// No description provided for @scannedCount.
   ///
   /// In en, this message translates to:

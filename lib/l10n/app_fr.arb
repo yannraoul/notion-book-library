@@ -34,6 +34,12 @@
   "modeCover": "Photo de couverture",
   "scanHint": "Aucun code-barres trouvé — essayez « Photo de couverture »",
   "tapToScan": "Touchez pour simuler un scan",
+  "scanCameraError": "Erreur caméra : {message}",
+  "@scanCameraError": {
+    "placeholders": {"message": {"type": "String"}}
+  },
+  "scanCoverCaptureFailed": "Impossible de capturer la couverture — réessayez.",
+  "scanCoverNoText": "Aucun texte lisible sur cette couverture — réessayez ou recherchez manuellement.",
 
   "scannedCount": "{count} scannés",
   "@scannedCount": {

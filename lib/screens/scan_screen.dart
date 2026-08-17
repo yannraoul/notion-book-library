@@ -21,14 +21,20 @@ import 'queue_screen.dart';
 
 enum _ScanMode { barcode, cover }
 
-/// Design screens 03/04 — the scan viewfinder. A single
-/// [MobileScannerController] (`returnImage: true`) serves both modes:
-/// barcode mode reads `capture.barcodes` from `onDetect` (which fires on
-/// every analyzed frame, confirmed by reading the package source — not
-/// just on a hit), cover-photo mode grabs the latest frame's
-/// `capture.image` bytes on a capture tap and runs on-device OCR on it.
-/// Camera capture itself can't be exercised on `flutter run -d windows`
-/// (see `CLAUDE.md`) — unverified until the Codemagic/Sideloadly loop.
+/// Design screens 03/04 — the scan viewfinder. Two
+/// [MobileScannerController]s, one per mode — only one is ever mounted in
+/// a [MobileScanner] widget at a time, so switching modes auto-starts and
+/// auto-stops the right one (confirmed by reading the package source: the
+/// widget starts/stops whatever controller it's given on mount/unmount,
+/// even when the controller was constructed externally). Barcode mode uses
+/// `returnImage: false` — it never needs the frame image, and per
+/// mobile_scanner's own changelog `returnImage: true` has a real per-frame
+/// encoding cost on both platforms, which is worth avoiding for the mode
+/// that has to run continuously. Cover-photo mode uses `returnImage: true`
+/// since it needs the latest frame's bytes on a capture tap, to run
+/// on-device OCR on it. Camera capture itself can't be exercised on
+/// `flutter run -d windows` (see `CLAUDE.md`) — unverified until the
+/// Codemagic/Sideloadly loop.
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
 
@@ -37,7 +43,8 @@ class ScanScreen extends ConsumerStatefulWidget {
 }
 
 class _ScanScreenState extends ConsumerState<ScanScreen> {
-  final _controller = MobileScannerController(returnImage: true);
+  final _barcodeController = MobileScannerController(returnImage: false);
+  final _coverController = MobileScannerController(returnImage: true);
   final _lookupService = BookLookupService();
   final _textRecognizer = TextRecognizer();
   final _recentIsbns = <String>{};
@@ -48,22 +55,30 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   bool _showHint = false;
   bool _busy = false;
   Timer? _hintTimer;
-  StreamSubscription<BarcodeCapture>? _subscription;
+  StreamSubscription<BarcodeCapture>? _barcodeSubscription;
+  StreamSubscription<BarcodeCapture>? _coverSubscription;
 
   @override
   void initState() {
     super.initState();
-    _subscription = _controller.barcodes.listen(_onCapture);
+    _barcodeSubscription = _barcodeController.barcodes.listen(_onBarcodeCapture, onError: _onScanError);
+    _coverSubscription = _coverController.barcodes.listen(_onCoverCapture, onError: _onScanError);
     _armHintTimer();
   }
 
   @override
   void dispose() {
     _hintTimer?.cancel();
-    _subscription?.cancel();
-    _controller.dispose();
+    _barcodeSubscription?.cancel();
+    _coverSubscription?.cancel();
+    _barcodeController.dispose();
+    _coverController.dispose();
     _textRecognizer.close();
     super.dispose();
+  }
+
+  void _onScanError(Object error, StackTrace stackTrace) {
+    debugPrint('ScanScreen: camera stream error: $error');
   }
 
   void _armHintTimer() {
@@ -76,9 +91,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     });
   }
 
-  void _onCapture(BarcodeCapture capture) {
-    _lastCapture = capture;
-    if (_mode != _ScanMode.barcode || _busy) return;
+  void _onBarcodeCapture(BarcodeCapture capture) {
+    if (_busy) return;
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
       if (raw == null) continue;
@@ -87,6 +101,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       _lookupIsbn(raw);
       break;
     }
+  }
+
+  void _onCoverCapture(BarcodeCapture capture) {
+    _lastCapture = capture;
   }
 
   Future<void> _lookupIsbn(String isbn) async {
@@ -124,10 +142,17 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       if (!mounted) return;
       setState(() => _busy = false);
       final guess = recognized.text.trim();
-      if (guess.isEmpty) return;
+      if (guess.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scanCoverNoText)));
+        return;
+      }
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => OcrCandidatesScreen(ocrGuess: guess)));
-    } catch (_) {
-      if (mounted) setState(() => _busy = false);
+    } catch (e) {
+      debugPrint('ScanScreen: cover capture failed: $e');
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scanCoverCaptureFailed)));
+      }
     }
   }
 
@@ -181,7 +206,23 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      MobileScanner(controller: _controller),
+                      MobileScanner(
+                        key: ValueKey(_mode),
+                        controller: _mode == _ScanMode.barcode ? _barcodeController : _coverController,
+                        errorBuilder: (context, error) {
+                          debugPrint('ScanScreen: camera init error: ${error.errorCode} ${error.errorDetails?.message}');
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                l10n.scanCameraError(error.errorDetails?.message ?? error.errorCode.name),
+                                style: const TextStyle(color: Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: tokens.accent.withValues(alpha: 0.7), width: 2),

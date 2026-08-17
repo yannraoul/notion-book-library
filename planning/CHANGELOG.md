@@ -16,3 +16,4 @@ is just the index.
 
 - [NBLB-1](bugs/NBLB-1.md) — iOS CocoaPods build failure (deployment target too low for google_mlkit_commons)
 - [NBLB-2](bugs/NBLB-2.md) — iOS home screen showed "Notion Book Library" instead of "Shelf"
+- [NBLB-3](bugs/NBLB-3.md) — iOS scan pipeline: barcode never detected, cover capture silently fails

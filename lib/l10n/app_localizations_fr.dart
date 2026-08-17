@@ -86,6 +86,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tapToScan => 'Touchez pour simuler un scan';
 
   @override
+  String scanCameraError(String message) {
+    return 'Erreur caméra : $message';
+  }
+
+  @override
+  String get scanCoverCaptureFailed =>
+      'Impossible de capturer la couverture — réessayez.';
+
+  @override
+  String get scanCoverNoText =>
+      'Aucun texte lisible sur cette couverture — réessayez ou recherchez manuellement.';
+
+  @override
   String scannedCount(int count) {
     return '$count scannés';
   }
