@@ -19,3 +19,4 @@ something is NBLM vs NBLB, etc).
 - [NBLM-6](features/NBLM-6.md) — Manual book entry + Notion write path
 - [NBLM-8](features/NBLM-8.md) — Multi-theme app icon (light/dark)
 - [NBLM-7](features/NBLM-7.md) — Barcode/OCR scan pipeline (Google Books/Open Library lookup, dedupe, genre-confirm)
+- [NBLM-9](features/NBLM-9.md) — Genre: live from Notion, create-or-link like authors

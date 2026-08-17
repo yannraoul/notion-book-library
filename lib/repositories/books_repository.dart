@@ -83,19 +83,26 @@ class BooksRepository {
     return ids;
   }
 
-  /// Resolves genre display names to `Genres*` relation ids. Only ever
-  /// matches existing rows — the genre list is fixed/closed, so a name with
-  /// no match is a real bug (the UI only ever offers picks from that same
-  /// fixed list) rather than something to silently skip.
+  /// Resolves genre display names to `Genres*` relation ids — matches
+  /// existing rows case/whitespace-insensitively, creates a new row for any
+  /// name not found (NBLM-9: genres are create-or-link now, same as
+  /// [resolveAuthorIds] — Yann adds genres directly in Notion sometimes, so
+  /// the app can no longer treat that list as fixed/closed).
   Future<List<String>> resolveGenreIds(String token, String genresDbId, List<String> genreNames) async {
     final existing = await api.queryRelationNames(token, genresDbId);
-    return genreNames.map((name) {
+    final ids = <String>[];
+    for (final name in genreNames) {
       final match = existing.entries.firstWhere(
-        (entry) => entry.value == name,
-        orElse: () => throw StateError('No Genres* row named "$name" — the fixed genre list is out of sync with Notion.'),
+        (entry) => entry.value.trim().toLowerCase() == name.trim().toLowerCase(),
+        orElse: () => const MapEntry('', ''),
       );
-      return match.key;
-    }).toList();
+      if (match.key.isNotEmpty) {
+        ids.add(match.key);
+      } else {
+        ids.add(await api.createGenrePage(token, genresDbId, name.trim()));
+      }
+    }
+    return ids;
   }
 
   /// Creates a new `Books*` row and writes it into the cache. Returns the

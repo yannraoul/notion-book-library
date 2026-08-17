@@ -167,6 +167,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get genreConfirmTitle => 'Genre';
 
   @override
+  String get genreNewHint => 'Ou tapez un nouveau genre';
+
+  @override
   String get fromApi => 'depuis l’API :';
 
   @override

@@ -166,6 +166,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get genreConfirmTitle => 'Genre';
 
   @override
+  String get genreNewHint => 'Or type a new genre';
+
+  @override
   String get fromApi => 'from API:';
 
   @override

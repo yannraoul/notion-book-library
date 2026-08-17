@@ -380,6 +380,12 @@ abstract class AppLocalizations {
   /// **'Genre'**
   String get genreConfirmTitle;
 
+  /// No description provided for @genreNewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Or type a new genre'**
+  String get genreNewHint;
+
   /// No description provided for @fromApi.
   ///
   /// In en, this message translates to:

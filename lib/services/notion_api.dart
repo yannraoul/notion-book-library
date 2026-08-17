@@ -89,6 +89,16 @@ class NotionApi {
     'icon': {'name': 'user', 'color': 'gray'},
   };
 
+  /// Same built-in-icon shape as [_bookIcon]/[_authorIcon] (Yann's explicit
+  /// call — no emoji). Unlike those two, `tag`/`gray` isn't live-confirmed
+  /// against his workspace; if it turns out not to be a valid Notion icon
+  /// slug, the first genre auto-create will fail loudly (a `createPage`
+  /// 400) rather than silently, so it'll surface fast on real use.
+  static const _genreIcon = {
+    'type': 'icon',
+    'icon': {'name': 'tag', 'color': 'gray'},
+  };
+
   /// Creates a new page in [databaseId] with the given Notion [properties]
   /// map (already shaped per-property, e.g. via the `_...Property` helpers
   /// below) — `POST /v1/pages`. Returns the new page's id.
@@ -113,9 +123,14 @@ class NotionApi {
   }
 
   /// Creates a bare title-only page — used for a new `Authors*` row.
-  /// `Genres*` is never created this way; that list is fixed/closed.
   Future<String> createRelationPage(String token, String databaseId, String name) {
     return createPage(token, databaseId, {'Name': _titleProperty(name)}, icon: _authorIcon);
+  }
+
+  /// Creates a new `Genres*` row (NBLM-9) — genres are create-or-link now,
+  /// same as authors, not the fixed/closed list NBLM-4 originally assumed.
+  Future<String> createGenrePage(String token, String databaseId, String name) {
+    return createPage(token, databaseId, {'Name': _titleProperty(name)}, icon: _genreIcon);
   }
 
   /// Creates a new `Books*` row. Only ever writes the fields Shelf owns
