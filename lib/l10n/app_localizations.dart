@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'Filter by genre'**
   String get filterByGenre;
 
+  /// No description provided for @filterGenreEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No genres yet.'**
+  String get filterGenreEmpty;
+
   /// No description provided for @apply.
   ///
   /// In en, this message translates to:
@@ -175,6 +181,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm'**
   String get confirm;
+
+  /// No description provided for @shelfSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search title, author, subtitle…'**
+  String get shelfSearchHint;
+
+  /// No description provided for @shelfNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No books match.'**
+  String get shelfNoResults;
 
   /// No description provided for @emptyTitle.
   ///

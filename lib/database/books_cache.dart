@@ -48,6 +48,10 @@ class BooksCache {
         'pages': book.pages,
         'published_date': book.publishedDate != null ? _dateFormat.format(book.publishedDate!) : null,
         'cover_url': book.coverUrl,
+        // Full ISO 8601 (date + time), not the date-only `_dateFormat` used
+        // above — Notion's `created_time` carries time-of-day and "Recent"
+        // needs that precision to order same-day adds correctly.
+        'date_added': book.dateAdded?.toIso8601String(),
         'api_categories': book.apiCategories,
         'genres': book.genres.join(', '),
         'status': book.reading?.status?.notionName,
@@ -84,6 +88,7 @@ class BooksCache {
       pages: row['pages'] as int?,
       publishedDate: publishedDate != null ? _dateFormat.parse(publishedDate) : null,
       coverUrl: row['cover_url'] as String?,
+      dateAdded: (row['date_added'] as String?) != null ? DateTime.parse(row['date_added'] as String) : null,
       apiCategories: row['api_categories'] as String?,
       genres: genres == null || genres.isEmpty ? const [] : genres.split(', '),
       reading: reading,

@@ -6,7 +6,9 @@ import '../models/book.dart';
 import '../providers/books_provider.dart';
 import '../providers/nav_provider.dart';
 import '../providers/notion_connection_provider.dart';
+import '../providers/shelf_filter_provider.dart';
 import '../providers/theme_provider.dart';
+import '../services/notion_api.dart';
 import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
@@ -23,6 +25,9 @@ class HomeScreen extends ConsumerWidget {
     final connection = ref.watch(notionConnectionProvider);
     final booksAsync = connection is NotionConnected ? ref.watch(booksProvider) : null;
     final hasBooks = booksAsync?.valueOrNull?.isNotEmpty ?? false;
+    final tab = ref.watch(shelfTabProvider);
+    final genreFilter = ref.watch(genreFilterProvider);
+    final searchQuery = ref.watch(shelfSearchQueryProvider);
 
     return Scaffold(
       backgroundColor: tokens.bg,
@@ -30,19 +35,7 @@ class HomeScreen extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.screenHorizontalPadding,
-              vertical: 12,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(l10n.shelfTitle, style: AppTypography.screenTitle(tokens.text)),
-                _SearchButton(tokens: tokens),
-              ],
-            ),
-          ),
+          _HomeHeader(tokens: tokens, l10n: l10n),
           if (hasBooks) _TabsRow(tokens: tokens, l10n: l10n),
           Expanded(
             child: connection is! NotionConnected
@@ -59,13 +52,110 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    data: (books) => books.isEmpty
-                        ? _EmptyState(tokens: tokens, l10n: l10n)
-                        : _BookGrid(tokens: tokens, books: books),
+                    data: (books) {
+                      if (books.isEmpty) return _EmptyState(tokens: tokens, l10n: l10n);
+                      final filtered = filterAndSortBooks(books, searchQuery: searchQuery, tab: tab, genreFilter: genreFilter);
+                      if (filtered.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Text(l10n.shelfNoResults, style: AppTypography.bodyMuted(tokens.muted)),
+                          ),
+                        );
+                      }
+                      return _BookGrid(tokens: tokens, books: filtered);
+                    },
                   ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Header row — the shelf title + search icon by default, swapping to a
+/// live search field across title/author/subtitle on tap (the design
+/// prototype's search icon is explicitly decorative, so this expand/
+/// collapse pattern has no reference to match, just app convention).
+class _HomeHeader extends ConsumerStatefulWidget {
+  final AppColorTokens tokens;
+  final AppLocalizations l10n;
+  const _HomeHeader({required this.tokens, required this.l10n});
+
+  @override
+  ConsumerState<_HomeHeader> createState() => _HomeHeaderState();
+}
+
+class _HomeHeaderState extends ConsumerState<_HomeHeader> {
+  bool _expanded = false;
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _close() {
+    _controller.clear();
+    ref.read(shelfSearchQueryProvider.notifier).state = '';
+    setState(() => _expanded = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = widget.tokens;
+    final l10n = widget.l10n;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding, vertical: 12),
+      child: _expanded
+          ? Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    autofocus: true,
+                    onChanged: (value) => ref.read(shelfSearchQueryProvider.notifier).state = value,
+                    style: TextStyle(color: tokens.text, fontSize: 15),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: l10n.shelfSearchHint,
+                      hintStyle: TextStyle(color: tokens.muted),
+                      filled: true,
+                      fillColor: tokens.surface,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius),
+                        borderSide: BorderSide(color: tokens.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius),
+                        borderSide: BorderSide(color: tokens.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius),
+                        borderSide: BorderSide(color: tokens.accent, width: 1.5),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                GestureDetector(onTap: _close, child: Icon(Icons.close, size: 20, color: tokens.muted)),
+              ],
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(l10n.shelfTitle, style: AppTypography.screenTitle(tokens.text)),
+                GestureDetector(onTap: () => setState(() => _expanded = true), child: _SearchButton(tokens: tokens)),
+              ],
+            ),
     );
   }
 }
@@ -128,23 +218,39 @@ class _SearchButton extends StatelessWidget {
   }
 }
 
-class _TabsRow extends StatelessWidget {
+class _TabsRow extends ConsumerWidget {
   final AppColorTokens tokens;
   final AppLocalizations l10n;
   const _TabsRow({required this.tokens, required this.l10n});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tab = ref.watch(shelfTabProvider);
+
+    void select(ShelfTab next) {
+      ref.read(shelfTabProvider.notifier).state = next;
+      // Matches the design prototype's `setTabGenre`: tapping "By genre"
+      // always (re)opens the filter sheet, even if already on that tab.
+      if (next == ShelfTab.genre) {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: tokens.surface,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          builder: (_) => const _GenreFilterSheet(),
+        );
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: tokens.border))),
       child: Row(
         children: [
-          _TabLabel(label: l10n.tabAll, active: true, tokens: tokens),
+          _TabLabel(label: l10n.tabAll, active: tab == ShelfTab.all, tokens: tokens, onTap: () => select(ShelfTab.all)),
           const SizedBox(width: 18),
-          _TabLabel(label: l10n.tabGenre, active: false, tokens: tokens),
+          _TabLabel(label: l10n.tabGenre, active: tab == ShelfTab.genre, tokens: tokens, onTap: () => select(ShelfTab.genre)),
           const SizedBox(width: 18),
-          _TabLabel(label: l10n.tabRecent, active: false, tokens: tokens),
+          _TabLabel(label: l10n.tabRecent, active: tab == ShelfTab.recent, tokens: tokens, onTap: () => select(ShelfTab.recent)),
         ],
       ),
     );
@@ -155,26 +261,175 @@ class _TabLabel extends StatelessWidget {
   final String label;
   final bool active;
   final AppColorTokens tokens;
-  const _TabLabel({required this.label, required this.active, required this.tokens});
+  final VoidCallback onTap;
+  const _TabLabel({required this.label, required this.active, required this.tokens, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: active ? tokens.accent : Colors.transparent,
-            width: 2,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: active ? tokens.accent : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: active ? tokens.text : tokens.muted,
           ),
         ),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: active ? tokens.text : tokens.muted,
+    );
+  }
+}
+
+/// Bottom sheet for the "By genre" tab — genre names come live from
+/// Notion's `Genres*` database (same `queryRelationNames` call NBLM-9's
+/// `GenreConfirmScreen` uses), not the old hardcoded `genreHues` list.
+/// Checkboxes filter the grid live; "Apply" just closes the sheet.
+class _GenreFilterSheet extends ConsumerStatefulWidget {
+  const _GenreFilterSheet();
+
+  @override
+  ConsumerState<_GenreFilterSheet> createState() => _GenreFilterSheetState();
+}
+
+class _GenreFilterSheetState extends ConsumerState<_GenreFilterSheet> {
+  List<String>? _genres;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGenres();
+  }
+
+  Future<void> _loadGenres() async {
+    final connection = ref.read(notionConnectionProvider);
+    final genresDbId = connection is NotionConnected ? connection.genresDatabaseId : null;
+    if (connection is! NotionConnected || genresDbId == null) {
+      setState(() => _genres = const []);
+      return;
+    }
+    try {
+      final names = await NotionApi().queryRelationNames(connection.token, genresDbId);
+      final sorted = names.values.toSet().toList()..sort();
+      if (mounted) setState(() => _genres = sorted);
+    } catch (_) {
+      if (mounted) setState(() => _genres = const []);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final tokens = ref.watch(colorTokensProvider(MediaQuery.platformBrightnessOf(context)));
+    final selected = ref.watch(genreFilterProvider);
+
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 26),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.filterByGenre.toUpperCase(),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.4, color: tokens.muted),
+              ),
+              const SizedBox(height: 12),
+              if (_genres == null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(child: CircularProgressIndicator(color: tokens.accent)),
+                )
+              else if (_genres!.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(l10n.filterGenreEmpty, style: TextStyle(color: tokens.muted, fontSize: 14)),
+                )
+              else
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _genres!
+                          .map(
+                            (genre) => _GenreCheckRow(
+                              tokens: tokens,
+                              label: genre,
+                              checked: selected.contains(genre),
+                              onToggle: () {
+                                final next = {...selected};
+                                if (!next.remove(genre)) next.add(genre);
+                                ref.read(genreFilterProvider.notifier).state = next;
+                              },
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: tokens.accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius)),
+                  ),
+                  child: Text(l10n.apply, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GenreCheckRow extends StatelessWidget {
+  final AppColorTokens tokens;
+  final String label;
+  final bool checked;
+  final VoidCallback onToggle;
+  const _GenreCheckRow({required this.tokens, required this.label, required this.checked, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onToggle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: checked ? tokens.accent : tokens.border, width: 1.5),
+                color: checked ? tokens.accent : Colors.transparent,
+              ),
+              child: checked ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+            ),
+            const SizedBox(width: 10),
+            Text(label, style: TextStyle(fontSize: 14.5, color: tokens.text)),
+          ],
         ),
       ),
     );

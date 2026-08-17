@@ -236,6 +236,7 @@ class NotionApi {
     final dateStarted = props['Date started']?['date']?['start'] as String?;
     final dateFinished = props['Date finished']?['date']?['start'] as String?;
     final datePublished = props['Date published']?['date']?['start'] as String?;
+    final createdTime = page['created_time'] as String?;
     return NotionBookRecord(
       id: page['id'] as String,
       name: _plainTitle({'title': props['Name']?['title']}),
@@ -247,6 +248,7 @@ class NotionApi {
       apiCategories: _plainRichText(props['API categories/subjects']),
       totalPages: (props['Pages']?['number'] as num?)?.toDouble(),
       datePublished: datePublished != null ? DateTime.parse(datePublished) : null,
+      dateAdded: createdTime != null ? DateTime.parse(createdTime) : null,
       status: BookStatus.fromNotionName(props['Status']?['status']?['name'] as String?),
       currentPage: (props['Current page']?['number'] as num?)?.toDouble(),
       dateStarted: dateStarted != null ? DateTime.parse(dateStarted) : null,
@@ -341,6 +343,11 @@ class NotionBookRecord {
   final String? apiCategories;
   final double? totalPages;
   final DateTime? datePublished;
+
+  /// From Notion's `created_time`, present on every page automatically —
+  /// not a `Books*` schema property. When a book was added to the shelf,
+  /// not the book's own publication date.
+  final DateTime? dateAdded;
   final BookStatus? status;
   final double? currentPage;
   final DateTime? dateStarted;
@@ -358,6 +365,7 @@ class NotionBookRecord {
     required this.apiCategories,
     required this.totalPages,
     required this.datePublished,
+    required this.dateAdded,
     required this.status,
     required this.currentPage,
     required this.dateStarted,

@@ -51,6 +51,12 @@ class Book {
   final DateTime? publishedDate;
   final String? coverUrl;
 
+  /// When this book was added to the shelf (Notion's page `created_time`
+  /// for a synced book, or the local write time for one just created) —
+  /// not [publishedDate], which is the book's own publication date. Drives
+  /// the Home screen's "Recent" tab sort.
+  final DateTime? dateAdded;
+
   /// Raw API category/subject dump — reference only, never the curated
   /// `genres` relation. See `docs/Backlog shelf.md`.
   final String? apiCategories;
@@ -74,6 +80,7 @@ class Book {
     this.pages,
     this.publishedDate,
     this.coverUrl,
+    this.dateAdded,
     this.apiCategories,
     this.genres = const [],
     this.reading,

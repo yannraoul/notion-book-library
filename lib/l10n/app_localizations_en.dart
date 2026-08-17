@@ -39,6 +39,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterByGenre => 'Filter by genre';
 
   @override
+  String get filterGenreEmpty => 'No genres yet.';
+
+  @override
   String get apply => 'Apply';
 
   @override
@@ -49,6 +52,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confirm => 'Confirm';
+
+  @override
+  String get shelfSearchHint => 'Search title, author, subtitle…';
+
+  @override
+  String get shelfNoResults => 'No books match.';
 
   @override
   String get emptyTitle => 'Your shelf is empty';

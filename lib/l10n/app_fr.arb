@@ -16,10 +16,14 @@
   },
 
   "filterByGenre": "Filtrer par genre",
+  "filterGenreEmpty": "Aucun genre pour l’instant.",
   "apply": "Appliquer",
   "cancel": "Annuler",
   "save": "Enregistrer",
   "confirm": "Confirmer",
+
+  "shelfSearchHint": "Titre, auteur, sous-titre…",
+  "shelfNoResults": "Aucun livre ne correspond.",
 
   "emptyTitle": "Votre étagère est vide",
   "emptyMessage": "Scannez un code-barres ou une couverture pour cataloguer votre premier livre.",

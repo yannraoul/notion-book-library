@@ -16,10 +16,14 @@
   },
 
   "filterByGenre": "Filter by genre",
+  "filterGenreEmpty": "No genres yet.",
   "apply": "Apply",
   "cancel": "Cancel",
   "save": "Save",
   "confirm": "Confirm",
+
+  "shelfSearchHint": "Search title, author, subtitle…",
+  "shelfNoResults": "No books match.",
 
   "emptyTitle": "Your shelf is empty",
   "emptyMessage": "Scan a barcode or cover to catalog your first book.",

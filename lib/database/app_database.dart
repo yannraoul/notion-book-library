@@ -10,7 +10,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 /// needed never opens a second connection to the same file.
 class AppDatabase {
   static const _dbName = 'app.db';
-  static const _version = 2;
+  static const _version = 3;
 
   static Database? _db;
 
@@ -31,6 +31,7 @@ class AppDatabase {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createSettingsTable(db);
+        if (oldVersion < 3) await db.execute('ALTER TABLE books ADD COLUMN date_added TEXT');
       },
     );
     _db = db;
@@ -59,6 +60,7 @@ class AppDatabase {
         pages INTEGER,
         published_date TEXT,
         cover_url TEXT,
+        date_added TEXT,
         api_categories TEXT,
         genres TEXT,
         status TEXT,

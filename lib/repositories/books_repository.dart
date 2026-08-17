@@ -147,6 +147,7 @@ class BooksRepository {
       pages: pages,
       publishedDate: publishedDate,
       coverUrl: coverUrl,
+      dateAdded: DateTime.now(),
       apiCategories: apiCategories,
       genres: genreNames,
     );
@@ -198,6 +199,7 @@ class BooksRepository {
       pages: r.totalPages?.round(),
       publishedDate: r.datePublished,
       coverUrl: r.coverUrl,
+      dateAdded: r.dateAdded,
       apiCategories: r.apiCategories,
       genres: r.genreIds.map((id) => genreNames[id]).whereType<String>().toList(),
       reading: hasReading
