@@ -11,6 +11,7 @@ import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
 import 'manual_entry_screen.dart';
+import 'scan_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -217,7 +218,7 @@ class _EmptyState extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => _showComingSoon(context, l10n),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanScreen())),
               style: ElevatedButton.styleFrom(
                 backgroundColor: tokens.accent,
                 foregroundColor: Colors.white,
@@ -371,7 +372,7 @@ class _AddFab extends StatelessWidget {
               title: Text(l10n.addSheetScan, style: TextStyle(color: tokens.text, fontWeight: FontWeight.w600)),
               onTap: () {
                 Navigator.pop(context);
-                _showComingSoon(context, l10n);
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanScreen()));
               },
             ),
             ListTile(
@@ -386,10 +387,4 @@ class _AddFab extends StatelessWidget {
       ),
     );
   }
-}
-
-void _showComingSoon(BuildContext context, AppLocalizations l10n) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(l10n.comingSoon)),
-  );
 }

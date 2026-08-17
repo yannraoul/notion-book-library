@@ -2,6 +2,10 @@ import '../database/books_cache.dart';
 import '../models/book.dart';
 import '../services/notion_api.dart';
 
+/// Normalizes for loose comparison — lowercase, punctuation stripped,
+/// whitespace collapsed.
+String _normalize(String s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+
 /// Translates between Notion's `Books*`/`Authors*`/`Genres*` databases and
 /// the app's own [Book] model, and orchestrates creating new `Books*` rows
 /// (NBLM-6). Never writes `Status`/`Current page`/`Date started`/`Date
@@ -141,6 +145,35 @@ class BooksRepository {
     );
     await cache.insertBook(book);
     return book;
+  }
+
+  /// Matches a scanned/looked-up candidate against the existing shelf, per
+  /// `docs/Backlog shelf.md`'s dedupe rule: ISBN exact match first: if
+  /// that finds nothing (or the candidate has no ISBN), fuzzy fallback =
+  /// normalized title exact match AND at least one normalized author in
+  /// common. Deliberately simple/deterministic rather than a string-
+  /// distance algorithm — no LLM, and this is the plainest rule that
+  /// satisfies "fuzzy" without adding a fuzzy-matching dependency.
+  Book? findDuplicate({
+    required String title,
+    String? isbn,
+    List<String> authors = const [],
+    required List<Book> existing,
+  }) {
+    if (isbn != null && isbn.isNotEmpty) {
+      for (final book in existing) {
+        if (book.isbn != null && book.isbn == isbn) return book;
+      }
+    }
+    final normalizedTitle = _normalize(title);
+    final normalizedAuthors = authors.map(_normalize).toSet();
+    for (final book in existing) {
+      if (_normalize(book.title) != normalizedTitle) continue;
+      if (normalizedAuthors.isEmpty) return book;
+      final bookAuthors = book.authors.map(_normalize).toSet();
+      if (bookAuthors.intersection(normalizedAuthors).isNotEmpty) return book;
+    }
+    return null;
   }
 
   Book _toBook(NotionBookRecord r, Map<String, String> authorNames, Map<String, String> genreNames) {
