@@ -50,7 +50,7 @@ class BookLookupService {
       addAll(openLib.map((v) => _fromOpenLibrary(v)));
     }
 
-    final scored = results.map((r) => r.copyWith(confidence: _similarity(query, r.title))).toList();
+    final scored = results.map((r) => r.copyWith(confidence: confidence(query, r))).toList();
     scored.sort((a, b) => (b.confidence ?? 0).compareTo(a.confidence ?? 0));
     return scored.take(5).toList();
   }
@@ -88,13 +88,45 @@ class BookLookupService {
 
   String _normalize(String s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
 
-  /// Token-overlap ratio between [query] and [title], 0.0-1.0.
-  double _similarity(String query, String title) {
-    final a = _normalize(query).split(' ').where((t) => t.isNotEmpty).toSet();
-    final b = _normalize(title).split(' ').where((t) => t.isNotEmpty).toSet();
+  Set<String> _tokenize(String s) => _normalize(s).split(' ').where((t) => t.isNotEmpty).toSet();
+
+  /// Token-overlap (Jaccard) ratio between two token sets, 0.0-1.0.
+  double _jaccard(Set<String> a, Set<String> b) {
     if (a.isEmpty || b.isEmpty) return 0;
-    final overlap = a.intersection(b).length;
-    return overlap / a.union(b).length;
+    return a.intersection(b).length / a.union(b).length;
+  }
+
+  static const double _titleWeight = 0.65;
+  static const double _authorWeight = 0.35;
+
+  /// Confidence score for [r] against [query]. A query mixing title and
+  /// author text (the only kind this app produces — OCR guesses and manual
+  /// search are both a single free-text field) used to be compared to the
+  /// title alone, so author-name tokens could out-vote the real title and
+  /// rank an unrelated book above the correct one (see the known-limitation
+  /// note in planning/features/NBLM-7.md). Instead, claim each query token
+  /// for whichever field it actually matches: tokens that overlap the
+  /// author's name are set aside before scoring the title on what's left,
+  /// and only contribute an author score of their own (how much of the
+  /// author's name was found in the query) when the query references the
+  /// author at all — most queries are title-only, and treating "author not
+  /// mentioned" the same as "author mismatch" would cap even a perfect
+  /// title match well below 1.0.
+  double confidence(String query, BookLookupResult r) {
+    final queryTokens = _tokenize(query);
+    final authorTokens = _tokenize(r.authors.join(' '));
+    final titleTokens = _tokenize(r.title);
+
+    final authorClaimed = queryTokens.intersection(authorTokens);
+    if (authorClaimed.isEmpty) {
+      return _jaccard(queryTokens, titleTokens);
+    }
+
+    final titleQueryTokens = queryTokens.difference(authorClaimed);
+    final titleScore = _jaccard(titleQueryTokens.isEmpty ? queryTokens : titleQueryTokens, titleTokens);
+    final authorScore = authorClaimed.length / authorTokens.length;
+
+    return _titleWeight * titleScore + _authorWeight * authorScore;
   }
 }
 
