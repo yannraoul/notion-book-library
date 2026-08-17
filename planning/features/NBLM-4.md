@@ -39,21 +39,34 @@ module, NHTM-20+), trimmed to what Shelf owns/reads.
   for real data (`authors: List<String>`, `coverUrl`, `apiCategories`,
   `publishedDate: DateTime?`).
 - OUT: writes of any kind (scan/manual-entry/dedupe are separate future
-  milestones), book detail screen, cover-image rendering (grid tiles stay
-  flat genre-color blocks per the design's own stated intent — "real cover
-  art to be swapped in later" — `coverUrl` is parsed and cached now but
-  unused in UI), persisted-database-id-preference/cache-fallback polish
-  (the sister app's later NHTM-18 refinement, not needed yet).
+  milestones), book detail screen, persisted-database-id-preference/
+  cache-fallback polish (the sister app's later NHTM-18 refinement, not
+  needed yet).
 - Done: `flutter analyze` clean. Live-tested on `-d windows` against the
   real token: not-connected prompt renders correctly before connecting;
   after connecting, the real library loads and renders with correct
-  genre-tile colors (cross-checked against a raw API dump — e.g. the
-  "Bâtard de Kosigan" LitRPG entries render in the LitRPG hue).
+  genre-tile colors and (same-session addition, see below) real cover art.
 - Open decisions: Notion's `Cover` file URLs are signed and expire (~1hr) —
-  caching `coverUrl` verbatim means a cached value can go stale before it's
-  ever rendered; not a problem yet since nothing displays it, but whichever
-  milestone adds cover-image rendering needs to either re-fetch on display
-  or treat the cached URL as potentially dead. `pages` converts Notion's
-  `number` (double) to `int` via `.round()` at the repository boundary —
-  fine for whole-number page counts, would lose precision if that ever
-  changed.
+  `_BookCover`'s `Image.network` `errorBuilder` falls back to the flat
+  genre-color block when a cached URL has gone stale, so this degrades
+  gracefully rather than needing a re-fetch-on-display mechanism. `pages`
+  converts Notion's `number` (double) to `int` via `.round()` at the
+  repository boundary — fine for whole-number page counts, would lose
+  precision if that ever changed.
+
+## Same-session fixes/additions
+
+- **Real cover art.** Originally scoped OUT per the design doc's stated
+  "real cover art to be swapped in later" intent, but Yann pointed out the
+  real books already have cover images in Notion, so there's no reason to
+  wait — `_BookTile`'s flat genre-color block is now `_BookCover`, which
+  renders `Image.network(book.coverUrl)` when present, falling back to the
+  genre block (`_GenreBlock`) via `errorBuilder` when there's no cover URL
+  or the signed URL has expired.
+- **Corrected a wrong verification claim, not a code bug.** This doc
+  originally said "Le Bâtard de Kosigan" rendered in the LitRPG hue —
+  actually checked live, its `Genres` relation resolves to Fantasy, and
+  the app was already rendering Fantasy's hue (300) correctly; LitRPG
+  (265) and Fantasy (300) are close enough at `chroma 0.1` that a small
+  screenshot misled a by-eye check. No app/relation-resolution bug — my
+  mistake in the milestone write-up, not the code.

@@ -275,21 +275,7 @@ class _BookTile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(8),
-            alignment: Alignment.bottomLeft,
-            decoration: BoxDecoration(
-              color: genreColor(book.primaryGenre),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              book.primaryGenre,
-              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
+        Expanded(child: _BookCover(book: book)),
         const SizedBox(height: 6),
         Text(
           book.title,
@@ -304,6 +290,52 @@ class _BookTile extends StatelessWidget {
           style: TextStyle(fontSize: 10.5, color: tokens.muted),
         ),
       ],
+    );
+  }
+}
+
+/// Real cover art when available, falling back to a flat genre-color block
+/// (with the genre name overlaid) when there's no cover or the image fails
+/// to load — Notion's `Cover` file URLs are signed and expire (~1hr), so a
+/// cached URL can easily be dead by the time this renders.
+class _BookCover extends StatelessWidget {
+  final Book book;
+  const _BookCover({required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    final coverUrl = book.coverUrl;
+    if (coverUrl == null) return _GenreBlock(book: book);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        coverUrl,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _GenreBlock(book: book),
+      ),
+    );
+  }
+}
+
+class _GenreBlock extends StatelessWidget {
+  final Book book;
+  const _GenreBlock({required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(8),
+      alignment: Alignment.bottomLeft,
+      decoration: BoxDecoration(
+        color: genreColor(book.primaryGenre),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        book.primaryGenre,
+        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }
