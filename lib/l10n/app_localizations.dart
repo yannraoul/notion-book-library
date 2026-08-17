@@ -703,6 +703,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'History'**
   String get genreHistory;
+
+  /// No description provided for @comingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Not built yet'**
+  String get comingSoon;
 }
 
 class _AppLocalizationsDelegate

@@ -130,5 +130,7 @@
   "genreSelfhelp": "Self-Help",
   "genreNonfiction": "Non-Fiction",
   "genreBiography": "Biography",
-  "genreHistory": "History"
+  "genreHistory": "History",
+
+  "comingSoon": "Not built yet"
 }

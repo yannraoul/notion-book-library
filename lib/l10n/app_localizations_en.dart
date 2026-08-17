@@ -322,4 +322,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get genreHistory => 'History';
+
+  @override
+  String get comingSoon => 'Not built yet';
 }

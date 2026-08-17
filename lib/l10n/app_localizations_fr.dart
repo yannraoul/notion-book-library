@@ -325,4 +325,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get genreHistory => 'Histoire';
+
+  @override
+  String get comingSoon => 'Pas encore disponible';
 }

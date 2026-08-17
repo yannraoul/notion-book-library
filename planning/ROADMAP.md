@@ -12,3 +12,4 @@ something is NBLM vs NBLB, etc).
 ## Milestones
 
 - [NBLM-1](features/NBLM-1.md) — Project scaffolding
+- [NBLM-2](features/NBLM-2.md) — Home screen (shelf grid + empty state), sample data
