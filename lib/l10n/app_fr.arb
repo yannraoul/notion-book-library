@@ -1,0 +1,134 @@
+{
+  "@@locale": "fr",
+
+  "navHome": "Accueil",
+  "navSettings": "Réglages",
+
+  "shelfTitle": "Shelf",
+  "tabAll": "Tout",
+  "tabGenre": "Par genre",
+  "tabRecent": "Récents",
+
+  "filterByGenre": "Filtrer par genre",
+  "apply": "Appliquer",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "confirm": "Confirmer",
+
+  "emptyTitle": "Votre étagère est vide",
+  "emptyMessage": "Scannez un code-barres ou une couverture pour cataloguer votre premier livre.",
+  "emptyCta": "Scanner votre premier livre",
+  "emptyManual": "ou ajouter manuellement",
+
+  "addSheetScan": "Scanner un livre",
+  "addSheetManual": "Ajouter manuellement",
+
+  "scanCancel": "Annuler",
+  "modeBarcode": "Code-barres",
+  "modeCover": "Photo de couverture",
+  "scanHint": "Aucun code-barres trouvé — essayez « Photo de couverture »",
+  "tapToScan": "Touchez pour simuler un scan",
+
+  "scannedCount": "{count} scannés",
+  "@scannedCount": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "reviewQueue": "Vérifier la file ({count})",
+  "@reviewQueue": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "queueTitle": "{count} livres scannés",
+  "@queueTitle": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "addReadyNow": "Ajouter {count} maintenant",
+  "@addReadyNow": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+
+  "statusReady": "prêt",
+  "statusDuplicate": "doublon",
+  "statusNeedsGenre": "genre ?",
+
+  "ocrTitle": "Quel livre avez-vous scanné ?",
+  "ocrNone": "Aucun de ceux-ci — recherche manuelle",
+  "manualSearchLabel": "Lecture OCR (modifiez si erronée) :",
+
+  "dedupeTitle": "Correspondance par titre + auteur",
+  "dedupeSubtitle": "(pas d’ISBN au dossier)",
+  "onShelf": "Sur votre étagère",
+  "thisScan": "Ce scan",
+  "missing": "manquant",
+  "fillMissing": "Compléter les détails manquants",
+  "addSeparate": "Ajouter comme livre séparé",
+
+  "genreConfirmTitle": "Genre",
+  "fromApi": "depuis l’API :",
+
+  "manualEntryTitle": "Ajouter un livre",
+  "fieldTitle": "Titre",
+  "fieldSubtitle": "Sous-titre",
+  "fieldIsbn": "ISBN",
+  "fieldPages": "Pages",
+  "fieldDatePublished": "Date de publication",
+  "fieldCover": "Couverture",
+  "fieldAuthors": "Auteurs",
+  "fieldGenres": "Genres",
+  "saveBook": "Enregistrer",
+
+  "detailBack": "‹ Retour",
+  "detailIsbn": "ISBN",
+  "detailPages": "Pages",
+  "detailPublished": "Publié",
+  "detailGenres": "Genres",
+
+  "readingStatusLabel": "Statut de lecture (lecture seule)",
+  "readingOwnedNote": "Géré par Habits — jamais modifié ici",
+  "statusLabel": "Statut",
+  "currentPageLabel": "Page",
+  "statusNotStarted": "Pas commencé",
+  "pageDash": "—",
+
+  "onboardingSkip": "Passer",
+  "onboardingNext": "Suivant",
+  "ob1Title": "Découvrez Shelf",
+  "ob1Body": "Shelf catalogue vos livres physiques — titre, auteur, ISBN, pages, genres. L’app ne suit pas votre progression de lecture ; cela se passe dans Habits.",
+  "ob2Title": "Trois façons d’ajouter un livre",
+  "ob2BodyScan": "Scannez un code-barres pour une identification instantanée",
+  "ob2BodyPhoto": "Prenez la couverture en photo et laissez l’OCR la lire",
+  "ob2BodyManual": "Ou saisissez les détails vous-même",
+  "ob3Title": "Les doublons sont détectés automatiquement",
+  "ob3Body": "Si un scan correspond à un livre déjà sur votre étagère, Shelf le signale pour fusionner les détails au lieu de créer une copie.",
+  "obScanCta": "Scanner votre premier livre",
+  "obSkipToShelf": "Passer à l’étagère",
+
+  "settingsTitle": "Réglages",
+  "settingsNotion": "Connexion Notion",
+  "settingsConnected": "Connecté à Notion",
+  "settingsWorkspace": "Espace Notion",
+  "settingsReconnect": "Se reconnecter",
+  "settingsDisconnect": "Se déconnecter",
+  "settingsLanguage": "Langue",
+  "settingsAppearance": "Apparence",
+  "settingsLight": "Clair",
+  "settingsDark": "Sombre",
+  "settingsSystem": "Système",
+  "settingsAccent": "Thème d’accent",
+  "settingsAbout": "À propos de Shelf",
+  "settingsAboutBody": "Shelf gère votre catalogue : titre, auteur, ISBN, pages, date de publication et genres. Le statut de lecture, la page actuelle et les notes appartiennent à Habits — Shelf les affiche sans jamais les modifier.",
+  "settingsViewOnboarding": "Revoir l’introduction",
+
+  "themeTerracotta": "Terracotta",
+  "themeVertRouge": "Vert & rouge",
+  "themeAmbreArdoise": "Ambre & ardoise",
+  "themeSarcelleRouille": "Sarcelle & rouille",
+
+  "genreFiction": "Fiction",
+  "genreScifi": "Science-fiction",
+  "genreFantasy": "Fantasy",
+  "genreBusiness": "Affaires",
+  "genreSelfhelp": "Développement perso",
+  "genreNonfiction": "Non-fiction",
+  "genreBiography": "Biographie",
+  "genreHistory": "Histoire"
+}

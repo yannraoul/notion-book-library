@@ -1,0 +1,134 @@
+{
+  "@@locale": "en",
+
+  "navHome": "Home",
+  "navSettings": "Settings",
+
+  "shelfTitle": "Shelf",
+  "tabAll": "All",
+  "tabGenre": "By genre",
+  "tabRecent": "Recent",
+
+  "filterByGenre": "Filter by genre",
+  "apply": "Apply",
+  "cancel": "Cancel",
+  "save": "Save",
+  "confirm": "Confirm",
+
+  "emptyTitle": "Your shelf is empty",
+  "emptyMessage": "Scan a barcode or cover to catalog your first book.",
+  "emptyCta": "Scan your first book",
+  "emptyManual": "or add manually",
+
+  "addSheetScan": "Scan a book",
+  "addSheetManual": "Add manually",
+
+  "scanCancel": "Cancel",
+  "modeBarcode": "Barcode",
+  "modeCover": "Cover photo",
+  "scanHint": "No barcode found — try \"Cover photo\" above",
+  "tapToScan": "Tap to simulate a scan",
+
+  "scannedCount": "{count} scanned",
+  "@scannedCount": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "reviewQueue": "Review queue ({count})",
+  "@reviewQueue": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "queueTitle": "{count} books scanned",
+  "@queueTitle": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "addReadyNow": "Add {count} ready now",
+  "@addReadyNow": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+
+  "statusReady": "ready",
+  "statusDuplicate": "duplicate",
+  "statusNeedsGenre": "genre?",
+
+  "ocrTitle": "Which book did you scan?",
+  "ocrNone": "None of these — search manually",
+  "manualSearchLabel": "OCR read (edit if wrong):",
+
+  "dedupeTitle": "Matched by title + author",
+  "dedupeSubtitle": "(no ISBN on file to compare)",
+  "onShelf": "On your shelf",
+  "thisScan": "This scan",
+  "missing": "missing",
+  "fillMissing": "Fill in missing details",
+  "addSeparate": "Add as separate book",
+
+  "genreConfirmTitle": "Genre",
+  "fromApi": "from API:",
+
+  "manualEntryTitle": "Add book manually",
+  "fieldTitle": "Title",
+  "fieldSubtitle": "Subtitle",
+  "fieldIsbn": "ISBN",
+  "fieldPages": "Pages",
+  "fieldDatePublished": "Date published",
+  "fieldCover": "Cover",
+  "fieldAuthors": "Authors",
+  "fieldGenres": "Genres",
+  "saveBook": "Save book",
+
+  "detailBack": "‹ Back",
+  "detailIsbn": "ISBN",
+  "detailPages": "Pages",
+  "detailPublished": "Published",
+  "detailGenres": "Genres",
+
+  "readingStatusLabel": "Reading status (read-only)",
+  "readingOwnedNote": "Owned by Habits — Shelf never edits these",
+  "statusLabel": "Status",
+  "currentPageLabel": "Page",
+  "statusNotStarted": "Not started",
+  "pageDash": "—",
+
+  "onboardingSkip": "Skip",
+  "onboardingNext": "Next",
+  "ob1Title": "Meet Shelf",
+  "ob1Body": "Shelf catalogs your physical books — title, author, ISBN, pages, genres. It does not track your reading progress; that lives in Habits.",
+  "ob2Title": "Three ways to add a book",
+  "ob2BodyScan": "Scan a barcode for instant lookup",
+  "ob2BodyPhoto": "Snap a cover photo and let OCR read it",
+  "ob2BodyManual": "Or type in the details yourself",
+  "ob3Title": "Duplicates get caught automatically",
+  "ob3Body": "If a scan matches a book already on your shelf, Shelf flags it so you can merge details instead of creating a copy.",
+  "obScanCta": "Scan your first book",
+  "obSkipToShelf": "Skip to shelf",
+
+  "settingsTitle": "Settings",
+  "settingsNotion": "Notion connection",
+  "settingsConnected": "Connected to Notion",
+  "settingsWorkspace": "Notion workspace",
+  "settingsReconnect": "Reconnect",
+  "settingsDisconnect": "Disconnect",
+  "settingsLanguage": "Language",
+  "settingsAppearance": "Appearance",
+  "settingsLight": "Light",
+  "settingsDark": "Dark",
+  "settingsSystem": "System",
+  "settingsAccent": "Accent theme",
+  "settingsAbout": "About Shelf",
+  "settingsAboutBody": "Shelf owns your catalog: title, author, ISBN, pages, publication date, and genres. Reading status, current page, and ratings belong to Habits — Shelf shows them but never edits them.",
+  "settingsViewOnboarding": "View onboarding again",
+
+  "themeTerracotta": "Terracotta",
+  "themeVertRouge": "Green & red",
+  "themeAmbreArdoise": "Amber & slate",
+  "themeSarcelleRouille": "Teal & rust",
+
+  "genreFiction": "Fiction",
+  "genreScifi": "Sci-Fi",
+  "genreFantasy": "Fantasy",
+  "genreBusiness": "Business",
+  "genreSelfhelp": "Self-Help",
+  "genreNonfiction": "Non-Fiction",
+  "genreBiography": "Biography",
+  "genreHistory": "History"
+}
