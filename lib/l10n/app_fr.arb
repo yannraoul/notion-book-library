@@ -119,6 +119,7 @@
   "settingsConnecting": "Connexion…",
   "settingsAccessibleDatabases": "Bases de données accessibles",
   "settingsNoDatabasesFound": "Aucune base de données partagée avec cette intégration.",
+  "settingsPreferences": "Préférences",
   "settingsLanguage": "Langue",
   "settingsAppearance": "Apparence",
   "settingsLight": "Clair",

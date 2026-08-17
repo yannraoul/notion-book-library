@@ -620,6 +620,12 @@ abstract class AppLocalizations {
   /// **'No databases shared with this integration yet.'**
   String get settingsNoDatabasesFound;
 
+  /// No description provided for @settingsPreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get settingsPreferences;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../providers/locale_provider.dart';
 import '../providers/notion_connection_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/notion_api.dart';
@@ -14,8 +15,8 @@ import '../theme/typography.dart';
 // relied on to read as "connected" regardless of which one is active).
 const _connectedDotColor = Color(0xFF34A853);
 
-/// Notion connection card is real (NBLM-3); everything else
-/// (Language/Appearance/Accent/About) is a separate future milestone.
+/// Notion connection (NBLM-3) and Preferences — theme + language (NBLM-5)
+/// are real; About Shelf is still a future milestone.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -48,11 +49,180 @@ class SettingsScreen extends ConsumerWidget {
               child: _NotionConnectionCard(),
             ),
             Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+              child: Text(l10n.settingsPreferences.toUpperCase(), style: AppTypography.sectionLabel(tokens.muted)),
+            ),
+            const _LanguageToggle(),
+            const SizedBox(height: 12),
+            const _ThemeSelector(),
+            Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               child: Text(l10n.comingSoon, style: AppTypography.bodyMuted(tokens.muted)),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _LanguageToggle extends ConsumerWidget {
+  const _LanguageToggle();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = ref.watch(colorTokensProvider(MediaQuery.platformBrightnessOf(context)));
+    final l10n = AppLocalizations.of(context)!;
+    final language = ref.watch(appLanguageProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
+      child: Row(
+        children: [
+          Text(l10n.settingsLanguage, style: AppTypography.bodyMuted(tokens.muted)),
+          const SizedBox(width: 12),
+          _SegmentedOption(
+            label: 'Français',
+            selected: language == AppLanguage.fr,
+            tokens: tokens,
+            onTap: () => ref.read(appLanguageProvider.notifier).setLanguage(AppLanguage.fr),
+          ),
+          const SizedBox(width: 8),
+          _SegmentedOption(
+            label: 'English',
+            selected: language == AppLanguage.en,
+            tokens: tokens,
+            onTap: () => ref.read(appLanguageProvider.notifier).setLanguage(AppLanguage.en),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemeSelector extends ConsumerWidget {
+  const _ThemeSelector();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tokens = ref.watch(colorTokensProvider(MediaQuery.platformBrightnessOf(context)));
+    final l10n = AppLocalizations.of(context)!;
+    final selectedTheme = ref.watch(appThemeProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.settingsAccent, style: AppTypography.bodyMuted(tokens.muted)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final theme in AppTheme.values)
+                _ThemeOption(
+                  label: _themeLabel(theme, l10n),
+                  swatch: AppColorTokens.forTheme(theme),
+                  selected: theme == selectedTheme,
+                  tokens: tokens,
+                  onTap: () => ref.read(appThemeProvider.notifier).setTheme(theme),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _themeLabel(AppTheme theme, AppLocalizations l10n) => switch (theme) {
+        AppTheme.terracotta => l10n.themeTerracotta,
+        AppTheme.vertRouge => l10n.themeVertRouge,
+        AppTheme.ambreArdoise => l10n.themeAmbreArdoise,
+        AppTheme.sarcelleRouille => l10n.themeSarcelleRouille,
+      };
+}
+
+class _ThemeOption extends StatelessWidget {
+  final String label;
+  final AppColorTokens swatch;
+  final bool selected;
+  final AppColorTokens tokens;
+  final VoidCallback onTap;
+
+  const _ThemeOption({
+    required this.label,
+    required this.swatch,
+    required this.selected,
+    required this.tokens,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? tokens.surface : Colors.transparent,
+          border: Border.all(color: selected ? tokens.text : tokens.border, width: 1),
+          borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ThemeSwatchDot(color: swatch.accent),
+            const SizedBox(width: 4),
+            _ThemeSwatchDot(color: swatch.secondary),
+            const SizedBox(width: 8),
+            Text(label, style: AppTypography.rowSubtitle(selected ? tokens.text : tokens.muted)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ThemeSwatchDot extends StatelessWidget {
+  final Color color;
+  const _ThemeSwatchDot({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+}
+
+class _SegmentedOption extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final AppColorTokens tokens;
+  final VoidCallback onTap;
+
+  const _SegmentedOption({
+    required this.label,
+    required this.selected,
+    required this.tokens,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? tokens.surface : Colors.transparent,
+          border: Border.all(color: selected ? tokens.text : tokens.border, width: 1),
+          borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius),
+        ),
+        child: Text(label, style: AppTypography.rowSubtitle(selected ? tokens.text : tokens.muted)),
       ),
     );
   }

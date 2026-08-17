@@ -10,7 +10,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 /// needed never opens a second connection to the same file.
 class AppDatabase {
   static const _dbName = 'app.db';
-  static const _version = 1;
+  static const _version = 2;
 
   static Database? _db;
 
@@ -27,10 +27,21 @@ class AppDatabase {
       version: _version,
       onCreate: (db, version) async {
         await _createBooksTable(db);
+        await _createSettingsTable(db);
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) await _createSettingsTable(db);
       },
     );
     _db = db;
     return db;
+  }
+
+  /// Non-secret app preferences (theme, language) as key/value rows —
+  /// see `SettingsStorage`. Not for secrets, the Notion token stays in
+  /// `flutter_secure_storage` via `NotionTokenStorage`.
+  Future<void> _createSettingsTable(Database db) async {
+    await db.execute('CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
   }
 
   /// Full-replace cache mirroring `NotionApi.queryBooks`'s read surface —

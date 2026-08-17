@@ -4,11 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'l10n/app_localizations.dart';
+import 'providers/locale_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/root_shell.dart';
+import 'services/settings_storage.dart';
+import 'theme/color_tokens.dart';
 
-void main() {
-  runApp(const ProviderScope(child: MyApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final storage = SettingsStorage();
+  final initialTheme = await readPersistedTheme(storage) ?? AppTheme.terracotta;
+  final initialLanguage = await readPersistedLanguage(storage) ?? AppLanguage.fr;
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        appThemeProvider.overrideWith(() => AppThemeNotifier(initialTheme, storage: storage)),
+        appLanguageProvider.overrideWith(() => AppLanguageNotifier(initialLanguage, storage: storage)),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends ConsumerWidget {
@@ -17,12 +33,13 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = ref.watch(colorTokensProvider(MediaQuery.platformBrightnessOf(context)));
+    final locale = ref.watch(appLocaleProvider);
 
     return MaterialApp(
       title: 'Shelf',
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('fr'),
+      locale: locale,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: tokens.accent,

@@ -285,6 +285,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'No databases shared with this integration yet.';
 
   @override
+  String get settingsPreferences => 'Preferences';
+
+  @override
   String get settingsLanguage => 'Language';
 
   @override

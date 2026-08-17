@@ -288,6 +288,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune base de données partagée avec cette intégration.';
 
   @override
+  String get settingsPreferences => 'Préférences';
+
+  @override
   String get settingsLanguage => 'Langue';
 
   @override
