@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  body{margin:0;font-family:-apple-system,system-ui,sans-serif}
+  a{text-decoration:none}
+  input,select,button{font-family:inherit}
+  input:focus,select:focus{outline:none}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;align-items:flex-start;justify-content:center;gap:28px;padding:40px;box-sizing:border-box;flex-wrap:wrap;background:#e9e6df">
+
+  <div style="width:210px;flex-shrink:0;background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;font-size:12px;color:#333">
+    <div style="font-weight:700;font-size:11px;margin-bottom:8px;color:#777;text-transform:uppercase;letter-spacing:0.04em">{{ str.devPanelTitle }}</div>
+    <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:12px">
+      <sc-for list="{{ devScreens }}" as="ds" hint-placeholder-count="14">
+        <button onClick="{{ ds.onGo }}" style="text-align:left;border:none;background:transparent;color:#333;padding:5px 7px;border-radius:6px;font-size:12px;cursor:pointer" style-hover="background:#f0f0f0">{{ ds.label }}</button>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid #eee;padding-top:10px">
+      <button onClick="{{ seedLibrary }}" style="border:1px solid #ccc;background:#f7f7f7;border-radius:6px;padding:7px 8px;font-size:11.5px;cursor:pointer">{{ str.devSeed }}</button>
+      <button onClick="{{ resetDemo }}" style="border:1px solid #ccc;background:#f7f7f7;border-radius:6px;padding:7px 8px;font-size:11.5px;cursor:pointer">{{ str.devReset }}</button>
+    </div>
+  </div>
+
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ isDark }}" hint-size="402px,874px">
+  <div style="width:100%;height:100%;position:relative;background:{{ tokens.bg }};overflow:hidden;display:flex;flex-direction:column">
+
+    <!-- EMPTY STATE -->
+    <sc-if value="{{ is.empty }}" hint-placeholder-val="{{ true }}">
+      <div style="height:100%;overflow:auto;display:flex;flex-direction:column;padding-top:62px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px">
+          <div style="font-size:28px;font-weight:700;color:{{ tokens.text }}">{{ str.shelfTitle }}</div>
+          <div style="width:36px;height:36px;border-radius:50%;border:1px solid {{ tokens.border }};background:{{ tokens.surface }};display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="5" fill="none" stroke="{{ tokens.muted }}" stroke-width="1.6"/><line x1="10.2" y1="10.2" x2="14.5" y2="14.5" stroke="{{ tokens.muted }}" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:0 32px 60px">
+          <svg width="88" height="88" viewBox="0 0 88 88">
+            <defs><pattern id="stripes" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="{{ tokens.track }}"/><line x1="0" y1="0" x2="0" y2="8" stroke="{{ tokens.border }}" stroke-width="4"/></pattern></defs>
+            <rect x="4" y="10" width="80" height="68" rx="10" fill="url(#stripes)"/>
+            <rect x="4" y="10" width="80" height="68" rx="10" fill="none" stroke="{{ tokens.border }}" stroke-width="1.5"/>
+          </svg>
+          <div style="font-family:ui-monospace,monospace;font-size:10px;color:{{ tokens.muted }};text-align:center">illustration: empty shelf</div>
+          <div style="font-size:19px;font-weight:700;color:{{ tokens.text }};text-align:center">{{ str.emptyTitle }}</div>
+          <div style="font-size:14px;color:{{ tokens.muted }};text-align:center;line-height:1.5">{{ str.emptyMessage }}</div>
+          <button onClick="{{ startScan }}" style="width:100%;background:{{ tokens.accent }};color:#fff;font-size:16px;font-weight:600;border:none;border-radius:9px;padding:14px;cursor:pointer;margin-top:6px">{{ str.emptyCta }}</button>
+          <button onClick="{{ goManualEntry }}" style="border:none;background:transparent;color:{{ tokens.accent }};font-size:13.5px;font-weight:500;cursor:pointer">{{ str.emptyManual }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- GRID -->
+    <sc-if value="{{ is.grid }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;overflow:auto;padding-top:62px;position:relative">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px">
+          <div style="font-size:28px;font-weight:700;color:{{ tokens.text }}">{{ str.shelfTitle }}</div>
+          <div style="width:36px;height:36px;border-radius:50%;border:1px solid {{ tokens.border }};background:{{ tokens.surface }};display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="6.5" cy="6.5" r="5" fill="none" stroke="{{ tokens.muted }}" stroke-width="1.6"/><line x1="10.2" y1="10.2" x2="14.5" y2="14.5" stroke="{{ tokens.muted }}" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div style="display:flex;gap:18px;padding:16px 20px 4px;border-bottom:1px solid {{ tokens.border }}">
+          <div onClick="{{ setTabAll }}" style="font-size:15px;font-weight:600;color:{{ tabAllColor }};padding-bottom:10px;border-bottom:2px solid {{ tabAllBorder }};cursor:pointer">{{ str.tabAll }}</div>
+          <div onClick="{{ setTabGenre }}" style="font-size:15px;font-weight:600;color:{{ tabGenreColor }};padding-bottom:10px;border-bottom:2px solid {{ tabGenreBorder }};cursor:pointer">{{ str.tabGenre }}</div>
+          <div onClick="{{ setTabRecent }}" style="font-size:15px;font-weight:600;color:{{ tabRecentColor }};padding-bottom:10px;border-bottom:2px solid {{ tabRecentBorder }};cursor:pointer">{{ str.tabRecent }}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px 20px 90px">
+          <sc-for list="{{ gridBooks }}" as="b" hint-placeholder-count="6">
+            <div onClick="{{ b.onSelect }}" style="cursor:pointer;display:flex;flex-direction:column;gap:6px">
+              <div style="aspect-ratio:2/3;border-radius:10px;background:{{ b.coverColor }};display:flex;align-items:flex-end;padding:8px;box-sizing:border-box">
+                <div style="color:#fff;font-size:10px;font-weight:600;opacity:0.85">{{ b.genreLabel }}</div>
+              </div>
+              <div style="font-size:12.5px;font-weight:600;color:{{ tokens.text }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.title }}</div>
+              <div style="font-size:10.5px;color:{{ tokens.muted }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.author }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ toggleAddMenu }}" style="position:absolute;right:20px;bottom:78px;width:56px;height:56px;border-radius:50%;background:{{ tokens.surface }};border:1.5px solid {{ tokens.accent }};box-shadow:0 4px 14px rgba(0,0,0,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:6">
+          <svg width="20" height="20" viewBox="0 0 20 20"><line x1="10" y1="2" x2="10" y2="18" stroke="{{ tokens.accent }}" stroke-width="2.4" stroke-linecap="round"/><line x1="2" y1="10" x2="18" y2="10" stroke="{{ tokens.accent }}" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+        <sc-if value="{{ showAddMenu }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;right:20px;bottom:140px;background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,0.2);overflow:hidden;z-index:7;min-width:170px">
+            <div onClick="{{ startScan }}" style="padding:13px 16px;font-size:14px;font-weight:600;color:{{ tokens.text }};cursor:pointer;border-bottom:1px solid {{ tokens.border }}">{{ str.addSheetScan }}</div>
+            <div onClick="{{ goManualEntry }}" style="padding:13px 16px;font-size:14px;font-weight:600;color:{{ tokens.text }};cursor:pointer">{{ str.addSheetManual }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ showFilterSheet }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeFilterSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:8"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:{{ tokens.surface }};border-radius:20px 20px 0 0;padding:18px 20px 26px;z-index:9;box-shadow:0 -8px 24px rgba(0,0,0,0.2)">
+            <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:{{ tokens.muted }};margin-bottom:12px">{{ str.filterByGenre }}</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+              <sc-for list="{{ filterGenreOptions }}" as="g" hint-placeholder-count="8">
+                <div onClick="{{ g.onToggle }}" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                  <div style="width:20px;height:20px;border-radius:5px;border:1.5px solid {{ g.borderColor }};background:{{ g.bgColor }};display:flex;align-items:center;justify-content:center">
+                    <sc-if value="{{ g.checked }}" hint-placeholder-val="{{ false }}"><svg width="11" height="9" viewBox="0 0 11 9"><path d="M1 4.5L4 7.5L10 1" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>
+                  </div>
+                  <div style="font-size:14.5px;color:{{ tokens.text }}">{{ g.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <button onClick="{{ closeFilterSheet }}" style="width:100%;background:{{ tokens.accent }};color:#fff;font-weight:600;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer">{{ str.apply }}</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- BOOK DETAIL -->
+    <sc-if value="{{ is.detail }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;overflow:auto;padding:62px 20px 40px">
+        <div onClick="{{ goGrid }}" style="font-size:16px;font-weight:500;color:{{ tokens.accent }};cursor:pointer;margin-bottom:18px">{{ str.detailBack }}</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px">
+          <div style="width:150px;height:225px;border-radius:12px;background:{{ selectedBookView.coverColor }}"></div>
+          <input value="{{ selectedBookView.title }}" onChange="{{ onDetailTitleChange }}" style="font-size:23px;font-weight:700;color:{{ tokens.text }};text-align:center;border:none;background:transparent;width:100%" style-focus="border-bottom:1px solid {{ tokens.accent }}"/>
+          <input value="{{ selectedBookView.author }}" onChange="{{ onDetailAuthorChange }}" style="font-size:14.5px;color:{{ tokens.muted }};text-align:center;border:none;background:transparent;width:100%" style-focus="border-bottom:1px solid {{ tokens.accent }}"/>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:18px;padding:16px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="font-size:13px;color:{{ tokens.muted }}">{{ str.detailIsbn }}</div>
+            <input value="{{ selectedBookView.isbn }}" onChange="{{ onDetailIsbnChange }}" style="font-size:14px;color:{{ tokens.text }};text-align:right;border:none;background:transparent;flex:1" style-focus="border-bottom:1px solid {{ tokens.accent }}"/>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="font-size:13px;color:{{ tokens.muted }}">{{ str.detailPages }}</div>
+            <input value="{{ selectedBookView.pages }}" onChange="{{ onDetailPagesChange }}" style="font-size:14px;color:{{ tokens.text }};text-align:right;border:none;background:transparent;flex:1" style-focus="border-bottom:1px solid {{ tokens.accent }}"/>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="font-size:13px;color:{{ tokens.muted }}">{{ str.detailPublished }}</div>
+            <input value="{{ selectedBookView.published }}" onChange="{{ onDetailPublishedChange }}" style="font-size:14px;color:{{ tokens.text }};text-align:right;border:none;background:transparent;flex:1" style-focus="border-bottom:1px solid {{ tokens.accent }}"/>
+          </div>
+          <div>
+            <div style="font-size:13px;color:{{ tokens.muted }};margin-bottom:8px">{{ str.detailGenres }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ detailGenreOptions }}" as="g" hint-placeholder-count="8">
+                <div onClick="{{ g.onToggle }}" style="cursor:pointer;font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1.5px solid {{ g.borderColor }};color:{{ g.textColor }};background:{{ g.bgColor }}">{{ g.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="background:{{ tokens.dark }};border-radius:18px;padding:16px;opacity:0.92">
+          <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:rgba(255,255,255,0.7);margin-bottom:12px">{{ str.readingStatusLabel }}</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px"><div style="font-size:13.5px;color:rgba(255,255,255,0.75)">{{ str.statusLabel }}</div><div style="font-size:13.5px;font-weight:600;color:#fff">{{ selectedBookView.readingStatus }}</div></div>
+          <div style="display:flex;justify-content:space-between"><div style="font-size:13.5px;color:rgba(255,255,255,0.75)">{{ str.currentPageLabel }}</div><div style="font-size:13.5px;font-weight:600;color:#fff">{{ selectedBookView.readingPage }}</div></div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- SCAN -->
+    <sc-if value="{{ is.scan }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;display:flex;flex-direction:column;background:#0a0a0a;padding-top:62px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 18px 12px">
+          <div onClick="{{ goGrid }}" style="color:rgba(255,255,255,0.75);font-size:15px;cursor:pointer">{{ str.scanCancel }}</div>
+          <div style="background:{{ tokens.accent }};color:#fff;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px">{{ scannedCountLabel }}</div>
+        </div>
+        <div style="display:flex;justify-content:center;padding-bottom:14px">
+          <div style="display:flex;background:rgba(255,255,255,0.12);border-radius:20px;padding:3px">
+            <div onClick="{{ setModeBarcode }}" style="padding:7px 16px;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer;background:{{ modeBarcodeBg }};color:{{ modeBarcodeColor }}">{{ str.modeBarcode }}</div>
+            <div onClick="{{ setModeCover }}" style="padding:7px 16px;border-radius:18px;font-size:13px;font-weight:600;cursor:pointer;background:{{ modeCoverBg }};color:{{ modeCoverColor }}">{{ str.modeCover }}</div>
+          </div>
+        </div>
+        <div onClick="{{ tapViewfinder }}" style="flex:1;margin:0 18px;border-radius:16px;background:#161616;position:relative;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center">
+          <div style="width:78%;height:1px;background:{{ tokens.accent }};box-shadow:0 0 8px {{ tokens.accent }}"></div>
+          <div style="position:absolute;top:14px;left:14px;width:22px;height:22px;border-top:2.5px solid rgba(255,255,255,0.55);border-left:2.5px solid rgba(255,255,255,0.55);border-radius:4px 0 0 0"></div>
+          <div style="position:absolute;top:14px;right:14px;width:22px;height:22px;border-top:2.5px solid rgba(255,255,255,0.55);border-right:2.5px solid rgba(255,255,255,0.55);border-radius:0 4px 0 0"></div>
+          <div style="position:absolute;bottom:14px;left:14px;width:22px;height:22px;border-bottom:2.5px solid rgba(255,255,255,0.55);border-left:2.5px solid rgba(255,255,255,0.55);border-radius:0 0 0 4px"></div>
+          <div style="position:absolute;bottom:14px;right:14px;width:22px;height:22px;border-bottom:2.5px solid rgba(255,255,255,0.55);border-right:2.5px solid rgba(255,255,255,0.55);border-radius:0 0 4px 0"></div>
+          <div style="position:absolute;bottom:10px;font-size:11px;color:rgba(255,255,255,0.5)">{{ str.tapToScan }}</div>
+        </div>
+        <sc-if value="{{ showHint }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:12px 24px 4px;color:{{ tokens.accent }};font-size:13px">{{ str.scanHint }}</div>
+        </sc-if>
+        <div style="display:flex;gap:8px;padding:16px 18px 8px">
+          <sc-for list="{{ scannedThumbs }}" as="th" hint-placeholder-count="0">
+            <div style="width:48px;height:48px;border-radius:8px;background:{{ th.color }}"></div>
+          </sc-for>
+        </div>
+        <div style="padding:8px 18px 30px">
+          <button onClick="{{ goQueue }}" disabled="{{ queueEmpty }}" style="width:100%;background:{{ reviewBtnBg }};color:{{ reviewBtnColor }};font-weight:600;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer">{{ reviewQueueLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- QUEUE REVIEW -->
+    <sc-if value="{{ is.queue }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;overflow:auto;padding:62px 20px 24px;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="font-size:20px;font-weight:700;color:{{ tokens.text }}">{{ queueTitleLabel }}</div>
+          <div onClick="{{ goScanFromQueue }}" style="font-size:14px;color:{{ tokens.muted }};cursor:pointer">{{ str.cancel }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;flex:1">
+          <sc-for list="{{ queueView }}" as="q" hint-placeholder-count="3">
+            <div onClick="{{ q.onOpen }}" style="background:{{ tokens.surface }};border:1px solid {{ q.borderColor }};border-radius:14px;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+              <div>
+                <div style="font-size:15px;font-weight:600;color:{{ tokens.text }}">{{ q.title }}</div>
+                <div style="font-size:12.5px;color:{{ tokens.muted }}">{{ q.author }}</div>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:{{ q.statusColor }}">{{ q.statusLabel }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ addReadyNow }}" disabled="{{ queueReadyEmpty }}" style="width:100%;background:{{ addReadyBtnBg }};color:{{ addReadyBtnColor }};font-weight:600;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer;margin-top:16px">{{ addReadyLabel }}</button>
+      </div>
+    </sc-if>
+
+    <!-- OCR RANKED LIST -->
+    <sc-if value="{{ is.ocrList }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;overflow:auto;padding:62px 20px 24px">
+        <div onClick="{{ goScanCover }}" style="font-size:16px;font-weight:500;color:{{ tokens.accent }};cursor:pointer;margin-bottom:14px">{{ str.detailBack }}</div>
+        <div style="font-size:19px;font-weight:700;color:{{ tokens.text }};margin-bottom:16px">{{ str.ocrTitle }}</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+          <sc-for list="{{ ocrCandidatesView }}" as="c" hint-placeholder-count="2">
+            <div onClick="{{ c.onSelect }}" style="background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px;cursor:pointer">
+              <div style="width:38px;height:56px;border-radius:6px;background:{{ tokens.dark }};flex-shrink:0"></div>
+              <div style="flex:1">
+                <div style="font-size:15px;font-weight:600;color:{{ tokens.text }}">{{ c.title }}</div>
+                <div style="font-size:12.5px;color:{{ tokens.muted }}">{{ c.author }}</div>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:{{ tokens.accent }};background:{{ tokens.accentSoft }};padding:3px 9px;border-radius:20px">{{ c.confidence }}%</div>
+            </div>
+          </sc-for>
+        </div>
+        <div onClick="{{ goManualSearch }}" style="font-size:13.5px;color:{{ tokens.alert }};cursor:pointer">{{ str.ocrNone }}</div>
+      </div>
+    </sc-if>
+
+    <!-- MANUAL SEARCH -->
+    <sc-if value="{{ is.manualSearch }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;overflow:auto;padding:62px 20px 24px">
+        <div onClick="{{ goOcrList }}" style="font-size:16px;font-weight:500;color:{{ tokens.accent }};cursor:pointer;margin-bottom:14px">{{ str.detailBack }}</div>
+        <div style="font-size:13px;color:{{ tokens.muted }};margin-bottom:6px">{{ str.manualSearchLabel }}</div>
+        <input value="{{ ocrGuess }}" onChange="{{ onOcrGuessChange }}" style="width:100%;box-sizing:border-box;background:{{ tokens.surface }};border:1.5px solid {{ tokens.accent }};border-radius:10px;padding:12px 14px;font-size:15px;color:{{ tokens.text }};margin-bottom:18px"/>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ manualSearchResultsView }}" as="r" hint-placeholder-count="3">
+            <div onClick="{{ r.onSelect }}" style="background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:12px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+              <div>
+                <div style="font-size:14px;font-weight:600;color:{{ tokens.text }}">{{ r.title }}</div>
+                <div style="font-size:12px;color:{{ tokens.muted }}">{{ r.author }}</div>
+              </div>
+              <div style="font-size:12px;font-weight:700;color:{{ tokens.muted }}">{{ r.confidence }}%</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- DEDUPE -->
+    <sc-if value="{{ is.dedupe }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;overflow:auto;padding:62px 20px 24px">
+        <div style="font-size:19px;font-weight:700;color:{{ tokens.text }}">{{ str.dedupeTitle }}</div>
+        <div style="font-size:13px;color:{{ tokens.muted }};margin-bottom:18px">{{ str.dedupeSubtitle }}</div>
+        <div style="display:flex;gap:14px;margin-bottom:22px">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:{{ tokens.muted }};margin-bottom:8px">{{ str.onShelf }}</div>
+            <div style="aspect-ratio:2/3;border-radius:10px;background:{{ tokens.track }};margin-bottom:8px"></div>
+            <div style="font-size:14px;font-weight:600;color:{{ tokens.text }}">{{ dedupeItem.title }}</div>
+            <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:6px">{{ dedupeItem.author }}</div>
+            <div style="font-size:11.5px;color:{{ tokens.alert }}">{{ str.detailIsbn }}: {{ str.missing }}</div>
+            <div style="font-size:11.5px;color:{{ tokens.alert }}">{{ str.detailPages }}: {{ str.missing }}</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:{{ tokens.muted }};margin-bottom:8px">{{ str.thisScan }}</div>
+            <div style="aspect-ratio:2/3;border-radius:10px;background:{{ dedupeItem.coverColor }};margin-bottom:8px"></div>
+            <div style="font-size:14px;font-weight:600;color:{{ tokens.text }}">{{ dedupeItem.title }}</div>
+            <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:6px">{{ dedupeItem.author }}</div>
+            <div style="font-size:11.5px;color:{{ tokens.text }}">{{ str.detailIsbn }}: {{ dedupeItem.isbn }}</div>
+            <div style="font-size:11.5px;color:{{ tokens.text }}">{{ str.detailPages }}: {{ dedupeItem.pages }}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button onClick="{{ resolveMergeActive }}" style="width:100%;background:{{ tokens.accent }};color:#fff;font-weight:600;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer">{{ str.fillMissing }}</button>
+          <button onClick="{{ resolveSeparateActive }}" style="width:100%;background:transparent;color:{{ tokens.text }};font-weight:600;font-size:15px;border:1.5px solid {{ tokens.border }};border-radius:9px;padding:12.5px;cursor:pointer">{{ str.addSeparate }}</button>
+          <div onClick="{{ cancelDedupe }}" style="text-align:center;font-size:14px;color:{{ tokens.muted }};padding:6px;cursor:pointer">{{ str.cancel }}</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- GENRE CONFIRM -->
+    <sc-if value="{{ is.genreConfirm }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;overflow:auto;padding:62px 20px 24px">
+        <div style="font-size:19px;font-weight:700;color:{{ tokens.text }};margin-bottom:18px">{{ str.genreConfirmTitle }}</div>
+        <select value="{{ genreSelectValue }}" onChange="{{ onGenreSelectChange }}" style="width:100%;box-sizing:border-box;background:{{ tokens.surface }};border:1.5px solid {{ tokens.accent }};border-radius:10px;padding:13px 14px;font-size:15px;font-weight:600;color:{{ tokens.text }};margin-bottom:10px">
+          <sc-for list="{{ genreSelectOptions }}" as="g" hint-placeholder-count="8">
+            <option value="{{ g.id }}">{{ g.label }}</option>
+          </sc-for>
+        </select>
+        <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:24px">{{ str.fromApi }} "{{ genreConfirmItem.apiCategory }}"</div>
+        <button onClick="{{ confirmGenreActive }}" style="width:100%;background:{{ tokens.accent }};color:#fff;font-weight:600;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer">{{ str.confirm }}</button>
+      </div>
+    </sc-if>
+
+    <!-- MANUAL ENTRY -->
+    <sc-if value="{{ is.manualEntry }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;overflow:auto;padding-top:62px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 16px;border-bottom:1px solid {{ tokens.border }}">
+          <div onClick="{{ goGrid }}" style="font-size:15px;color:{{ tokens.muted }};cursor:pointer">{{ str.cancel }}</div>
+          <div style="font-size:15px;font-weight:600;color:{{ tokens.text }}">{{ str.manualEntryTitle }}</div>
+          <div onClick="{{ saveManualEntry }}" style="font-size:15px;font-weight:600;color:{{ tokens.accent }};cursor:pointer">{{ str.save }}</div>
+        </div>
+        <div style="padding:18px 20px 40px;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:6px">{{ str.fieldTitle }}</div>
+            <input value="{{ draft.title }}" onChange="{{ onDraftTitleChange }}" style="width:100%;box-sizing:border-box;background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:9px;padding:11px 13px;font-size:14.5px;color:{{ tokens.text }}"/>
+          </div>
+          <div>
+            <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:6px">{{ str.fieldSubtitle }}</div>
+            <input value="{{ draft.subtitle }}" onChange="{{ onDraftSubtitleChange }}" style="width:100%;box-sizing:border-box;background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:9px;padding:11px 13px;font-size:14.5px;color:{{ tokens.text }}"/>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div style="flex:1">
+              <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:6px">{{ str.fieldIsbn }}</div>
+              <input value="{{ draft.isbn }}" onChange="{{ onDraftIsbnChange }}" style="width:100%;box-sizing:border-box;background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:9px;padding:11px 13px;font-size:14.5px;color:{{ tokens.text }}"/>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:6px">{{ str.fieldPages }}</div>
+              <input value="{{ draft.pages }}" onChange="{{ onDraftPagesChange }}" style="width:100%;box-sizing:border-box;background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:9px;padding:11px 13px;font-size:14.5px;color:{{ tokens.text }}"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px">
+            <div style="flex:1">
+              <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:6px">{{ str.fieldDatePublished }}</div>
+              <input type="date" value="{{ draft.datePublished }}" onChange="{{ onDraftDateChange }}" style="width:100%;box-sizing:border-box;background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:9px;padding:10px 13px;font-size:13.5px;color:{{ tokens.text }}"/>
+            </div>
+            <div style="width:64px;flex-shrink:0">
+              <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:6px">{{ str.fieldCover }}</div>
+              <div style="width:64px;height:44px;border-radius:9px;border:1.5px dashed {{ tokens.border }};display:flex;align-items:center;justify-content:center;font-size:16px;color:{{ tokens.muted }}">+</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:6px">{{ str.fieldAuthors }}</div>
+            <input value="{{ draft.authors }}" onChange="{{ onDraftAuthorsChange }}" style="width:100%;box-sizing:border-box;background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:9px;padding:11px 13px;font-size:14.5px;color:{{ tokens.text }}"/>
+          </div>
+          <div>
+            <div style="font-size:12px;color:{{ tokens.muted }};margin-bottom:8px">{{ str.fieldGenres }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ draftGenreOptions }}" as="g" hint-placeholder-count="8">
+                <div onClick="{{ g.onToggle }}" style="cursor:pointer;font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;border:1.5px solid {{ g.borderColor }};color:{{ g.textColor }};background:{{ g.bgColor }}">{{ g.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <button onClick="{{ saveManualEntry }}" style="width:100%;background:{{ tokens.accent }};color:#fff;font-weight:600;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer;margin-top:6px">{{ str.saveBook }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ONBOARDING 1 -->
+    <sc-if value="{{ is.ob1 }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;display:flex;flex-direction:column;padding:62px 28px 40px">
+        <div style="display:flex;justify-content:flex-end"><div onClick="{{ skipOnboarding }}" style="font-size:14px;color:{{ tokens.muted }};cursor:pointer">{{ str.onboardingSkip }}</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center">
+          <svg width="72" height="72" viewBox="0 0 72 72"><rect x="8" y="12" width="56" height="48" rx="8" fill="{{ tokens.accentSoft }}"/><rect x="8" y="12" width="56" height="48" rx="8" fill="none" stroke="{{ tokens.accent }}" stroke-width="2"/><line x1="36" y1="16" x2="36" y2="56" stroke="{{ tokens.accent }}" stroke-width="2"/></svg>
+          <div style="font-size:22px;font-weight:700;color:{{ tokens.text }}">{{ str.ob1Title }}</div>
+          <div style="font-size:14.5px;color:{{ tokens.muted }};line-height:1.6">{{ str.ob1Body }}</div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:6px;margin-bottom:18px"><div style="width:18px;height:6px;border-radius:3px;background:{{ tokens.accent }}"></div><div style="width:6px;height:6px;border-radius:3px;background:{{ tokens.border }}"></div><div style="width:6px;height:6px;border-radius:3px;background:{{ tokens.border }}"></div></div>
+        <button onClick="{{ goOnboarding2 }}" style="width:100%;background:{{ tokens.accent }};color:#fff;font-weight:600;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer">{{ str.onboardingNext }}</button>
+      </div>
+    </sc-if>
+
+    <!-- ONBOARDING 2 -->
+    <sc-if value="{{ is.ob2 }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;display:flex;flex-direction:column;padding:62px 28px 40px">
+        <div style="display:flex;justify-content:flex-end"><div onClick="{{ skipOnboarding }}" style="font-size:14px;color:{{ tokens.muted }};cursor:pointer">{{ str.onboardingSkip }}</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px">
+          <div style="font-size:22px;font-weight:700;color:{{ tokens.text }};text-align:center;margin-bottom:6px">{{ str.ob2Title }}</div>
+          <div style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;border-radius:10px;background:{{ tokens.accentSoft }};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">▮▮</div><div style="font-size:14px;color:{{ tokens.text }}">{{ str.ob2BodyScan }}</div></div>
+          <div style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;border-radius:10px;background:{{ tokens.accentSoft }};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">▢</div><div style="font-size:14px;color:{{ tokens.text }}">{{ str.ob2BodyPhoto }}</div></div>
+          <div style="display:flex;align-items:center;gap:14px"><div style="width:40px;height:40px;border-radius:10px;background:{{ tokens.accentSoft }};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">✎</div><div style="font-size:14px;color:{{ tokens.text }}">{{ str.ob2BodyManual }}</div></div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:6px;margin-bottom:18px"><div style="width:6px;height:6px;border-radius:3px;background:{{ tokens.border }}"></div><div style="width:18px;height:6px;border-radius:3px;background:{{ tokens.accent }}"></div><div style="width:6px;height:6px;border-radius:3px;background:{{ tokens.border }}"></div></div>
+        <button onClick="{{ goOnboarding3 }}" style="width:100%;background:{{ tokens.accent }};color:#fff;font-weight:600;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer">{{ str.onboardingNext }}</button>
+      </div>
+    </sc-if>
+
+    <!-- ONBOARDING 3 -->
+    <sc-if value="{{ is.ob3 }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;display:flex;flex-direction:column;padding:62px 28px 40px">
+        <div style="display:flex;justify-content:flex-end"><div style="width:1px"></div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center">
+          <svg width="72" height="72" viewBox="0 0 72 72"><circle cx="36" cy="36" r="28" fill="{{ tokens.secondarySoft }}"/><path d="M24 36l9 9l16-18" fill="none" stroke="{{ tokens.secondary }}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div style="font-size:22px;font-weight:700;color:{{ tokens.text }}">{{ str.ob3Title }}</div>
+          <div style="font-size:14.5px;color:{{ tokens.muted }};line-height:1.6">{{ str.ob3Body }}</div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:6px;margin-bottom:18px"><div style="width:6px;height:6px;border-radius:3px;background:{{ tokens.border }}"></div><div style="width:6px;height:6px;border-radius:3px;background:{{ tokens.border }}"></div><div style="width:18px;height:6px;border-radius:3px;background:{{ tokens.accent }}"></div></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button onClick="{{ finishOnboardingScan }}" style="width:100%;background:{{ tokens.accent }};color:#fff;font-weight:600;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer">{{ str.obScanCta }}</button>
+          <button onClick="{{ finishOnboardingSkip }}" style="width:100%;background:transparent;color:{{ tokens.text }};font-weight:600;font-size:15px;border:1.5px solid {{ tokens.border }};border-radius:9px;padding:12.5px;cursor:pointer">{{ str.obSkipToShelf }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- SETTINGS -->
+    <sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+      <div style="height:100%;overflow:auto;padding-top:62px">
+        <div style="font-size:28px;font-weight:700;color:{{ tokens.text }};padding:0 20px 18px">{{ str.settingsTitle }}</div>
+        <div style="padding:0 20px 90px;display:flex;flex-direction:column;gap:22px">
+
+          <div>
+            <div style="font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:{{ tokens.muted }};margin-bottom:8px">{{ str.settingsNotion }}</div>
+            <div style="background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:16px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid {{ tokens.border }}">
+                <div style="width:34px;height:34px;border-radius:9px;background:{{ tokens.dark }};color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center">N</div>
+                <div style="flex:1"><div style="font-size:15px;font-weight:600;color:{{ tokens.text }}">{{ str.settingsConnected }}</div><div style="font-size:12px;color:{{ tokens.muted }}">{{ str.settingsWorkspace }}</div></div>
+                <div style="width:8px;height:8px;border-radius:50%;background:{{ tokens.accent }}"></div>
+              </div>
+              <div style="display:flex;padding:12px 16px;gap:16px">
+                <div onClick="{{ noop }}" style="font-size:13px;color:{{ tokens.accent }};cursor:pointer">{{ str.settingsReconnect }}</div>
+                <div onClick="{{ noop }}" style="font-size:13px;color:{{ tokens.alert }};cursor:pointer">{{ str.settingsDisconnect }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:{{ tokens.muted }};margin-bottom:8px">{{ str.settingsLanguage }}</div>
+            <div style="background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:16px;padding:12px 16px;display:flex;justify-content:flex-end">
+              <div style="display:flex;border:1px solid {{ tokens.border }};border-radius:9px;overflow:hidden">
+                <sc-for list="{{ langOptions }}" as="o" hint-placeholder-count="2">
+                  <div onClick="{{ o.onSelect }}" style="padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;background:{{ o.bg }};color:{{ o.color }};border-right:1px solid {{ tokens.border }}">{{ o.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:{{ tokens.muted }};margin-bottom:8px">{{ str.settingsAppearance }}</div>
+            <div style="background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:16px;padding:12px 16px;display:flex;justify-content:flex-end">
+              <div style="display:flex;border:1px solid {{ tokens.border }};border-radius:9px;overflow:hidden">
+                <sc-for list="{{ modeOptions }}" as="o" hint-placeholder-count="3">
+                  <div onClick="{{ o.onSelect }}" style="padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;background:{{ o.bg }};color:{{ o.color }};border-right:1px solid {{ tokens.border }}">{{ o.label }}</div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:{{ tokens.muted }};margin-bottom:8px">{{ str.settingsAccent }}</div>
+            <div style="background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:16px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px">
+              <sc-for list="{{ themeOptions }}" as="th" hint-placeholder-count="4">
+                <div onClick="{{ th.onSelect }}" style="display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:20px;border:1.5px solid {{ th.borderColor }};cursor:pointer">
+                  <div style="width:11px;height:11px;border-radius:50%;background:{{ th.accent }}"></div>
+                  <div style="width:11px;height:11px;border-radius:50%;background:{{ th.secondary }}"></div>
+                  <div style="font-size:12.5px;font-weight:600;color:{{ tokens.text }}">{{ th.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:{{ tokens.muted }};margin-bottom:8px">{{ str.settingsAbout }}</div>
+            <div style="background:{{ tokens.surface }};border:1px solid {{ tokens.border }};border-radius:16px;padding:16px">
+              <div style="font-size:13.5px;color:{{ tokens.muted }};line-height:1.6;margin-bottom:12px">{{ str.settingsAboutBody }}</div>
+              <div onClick="{{ viewOnboardingAgain }}" style="font-size:13.5px;font-weight:600;color:{{ tokens.accent }};cursor:pointer">{{ str.settingsViewOnboarding }}</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- BOTTOM NAV -->
+    <sc-if value="{{ showBottomNav }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute;left:0;right:0;bottom:0;background:{{ tokens.surface }};border-top:1px solid {{ tokens.border }};display:flex;padding:10px 8px 22px;z-index:5">
+        <div onClick="{{ goGrid }}" style="flex:1;text-align:center;font-size:11px;font-weight:600;color:{{ navBooksColor }};cursor:pointer">{{ str.navHome }}</div>
+        <div onClick="{{ goSettings }}" style="flex:1;text-align:center;font-size:11px;font-weight:600;color:{{ navSettingsColor }};cursor:pointer">{{ str.navSettings }}</div>
+      </div>
+    </sc-if>
+
+  </div>
+  </x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+const GENRES = [
+  { id: 'fiction', en: 'Fiction', fr: 'Fiction', hue: 260 },
+  { id: 'scifi', en: 'Sci-Fi', fr: 'Science-fiction', hue: 195 },
+  { id: 'fantasy', en: 'Fantasy', fr: 'Fantasy', hue: 300 },
+  { id: 'business', en: 'Business', fr: 'Affaires', hue: 90 },
+  { id: 'selfhelp', en: 'Self-Help', fr: 'Développement perso', hue: 20 },
+  { id: 'nonfiction', en: 'Non-Fiction', fr: 'Non-fiction', hue: 230 },
+  { id: 'biography', en: 'Biography', fr: 'Biographie', hue: 350 },
+  { id: 'history', en: 'History', fr: 'Histoire', hue: 140 },
+];
+
+const THEME_DEFS = {
+  terracotta: { nameEn: 'Terracotta', nameFr: 'Terracotta', accent: 'oklch(0.62 0.15 45)', secondary: 'oklch(0.55 0.08 120)', accentSoftL: 'oklch(0.94 0.03 45)', accentSoftD: 'oklch(0.32 0.07 45)', secondarySoftL: 'oklch(0.93 0.03 120)', secondarySoftD: 'oklch(0.3 0.05 120)' },
+  vertRouge: { nameEn: 'Green & Red', nameFr: 'Vert & rouge', accent: 'oklch(0.58 0.13 145)', secondary: 'oklch(0.56 0.15 30)', accentSoftL: 'oklch(0.94 0.03 145)', accentSoftD: 'oklch(0.3 0.06 145)', secondarySoftL: 'oklch(0.94 0.03 30)', secondarySoftD: 'oklch(0.32 0.07 30)' },
+  ambreArdoise: { nameEn: 'Amber & Slate', nameFr: 'Ambre & ardoise', accent: 'oklch(0.72 0.14 75)', secondary: 'oklch(0.52 0.08 250)', accentSoftL: 'oklch(0.95 0.03 75)', accentSoftD: 'oklch(0.36 0.07 75)', secondarySoftL: 'oklch(0.93 0.02 250)', secondarySoftD: 'oklch(0.3 0.04 250)' },
+  sarcelleRouille: { nameEn: 'Teal & Rust', nameFr: 'Sarcelle & rouille', accent: 'oklch(0.6 0.1 195)', secondary: 'oklch(0.56 0.14 40)', accentSoftL: 'oklch(0.94 0.02 195)', accentSoftD: 'oklch(0.3 0.04 195)', secondarySoftL: 'oklch(0.94 0.03 40)', secondarySoftD: 'oklch(0.32 0.07 40)' },
+};
+
+function neutralTokens(dark) {
+  return dark ? {
+    bg: 'oklch(0.19 0.008 75)', surface: 'oklch(0.24 0.008 75)', text: 'oklch(0.95 0.005 75)',
+    muted: 'oklch(0.65 0.01 75)', border: 'oklch(0.32 0.01 75)', track: 'oklch(0.32 0.01 75)',
+    dark: 'oklch(0.55 0.01 75)', alert: 'oklch(0.68 0.15 30)',
+  } : {
+    bg: 'oklch(0.97 0.006 75)', surface: 'oklch(0.995 0.002 75)', text: 'oklch(0.22 0.01 60)',
+    muted: 'oklch(0.55 0.01 60)', border: 'oklch(0.9 0.006 75)', track: 'oklch(0.9 0.006 75)',
+    dark: 'oklch(0.32 0.01 60)', alert: 'oklch(0.55 0.15 30)',
+  };
+}
+
+const STRINGS = {
+  en: {
+    navHome: 'Home', navStats: 'Stats', navBadges: 'Badges', navBooks: 'Books', navSettings: 'Settings',
+    shelfTitle: 'Shelf', tabAll: 'All', tabGenre: 'By genre', tabRecent: 'Recent',
+    filterByGenre: 'Filter by genre', apply: 'Apply', cancel: 'Cancel',
+    emptyTitle: 'Your shelf is empty', emptyMessage: 'Scan a barcode or cover to catalog your first book.', emptyCta: 'Scan your first book', emptyManual: 'or add manually',
+    addSheetScan: 'Scan a book', addSheetManual: 'Add manually',
+    scanCancel: 'Cancel', modeBarcode: 'Barcode', modeCover: 'Cover photo',
+    scanHint: 'No barcode found — try "Cover photo" above', tapToScan: 'Tap to simulate a scan',
+    scannedCount: '{n} scanned', reviewQueue: 'Review queue ({n})', queueTitle: '{n} books scanned', addReadyNow: 'Add {n} ready now',
+    statusReady: 'ready', statusDuplicate: 'duplicate', statusNeedsGenre: 'genre?',
+    ocrTitle: 'Which book did you scan?', ocrNone: 'None of these — search manually',
+    manualSearchLabel: 'OCR read (edit if wrong):',
+    dedupeTitle: 'Matched by title + author', dedupeSubtitle: '(no ISBN on file to compare)',
+    onShelf: 'On your shelf', thisScan: 'This scan', missing: 'missing', fillMissing: 'Fill in missing details', addSeparate: 'Add as separate book',
+    genreConfirmTitle: 'Genre', fromApi: 'from API:', confirm: 'Confirm',
+    manualEntryTitle: 'Add book manually', fieldTitle: 'Title', fieldSubtitle: 'Subtitle', fieldIsbn: 'ISBN', fieldPages: 'Pages',
+    fieldDatePublished: 'Date published', fieldCover: 'Cover', fieldAuthors: 'Authors', fieldGenres: 'Genres', saveBook: 'Save book', save: 'Save',
+    detailBack: '‹ Back', detailIsbn: 'ISBN', detailPages: 'Pages', detailPublished: 'Published', detailGenres: 'Genres',
+    readingStatusLabel: 'Reading status (read-only)', readingOwnedNote: 'Owned by Habits — Shelf never edits these', statusLabel: 'Status', currentPageLabel: 'Page',
+    statusNotStarted: 'Not started', pageDash: '—',
+    onboardingSkip: 'Skip', onboardingNext: 'Next',
+    ob1Title: 'Meet Shelf', ob1Body: 'Shelf catalogs your physical books — title, author, ISBN, pages, genres. It does not track your reading progress; that lives in Habits.',
+    ob2Title: 'Three ways to add a book', ob2BodyScan: 'Scan a barcode for instant lookup', ob2BodyPhoto: 'Snap a cover photo and let OCR read it', ob2BodyManual: 'Or type in the details yourself',
+    ob3Title: 'Duplicates get caught automatically', ob3Body: 'If a scan matches a book already on your shelf, Shelf flags it so you can merge details instead of creating a copy.',
+    obScanCta: 'Scan your first book', obSkipToShelf: 'Skip to shelf',
+    settingsTitle: 'Settings', settingsNotion: 'Notion connection', settingsConnected: 'Connected to Notion', settingsWorkspace: "Jordan's workspace",
+    settingsReconnect: 'Reconnect', settingsDisconnect: 'Disconnect',
+    settingsLanguage: 'Language', settingsAppearance: 'Appearance', settingsLight: 'Light', settingsDark: 'Dark', settingsSystem: 'System',
+    settingsAccent: 'Accent theme', settingsAbout: 'About Shelf',
+    settingsAboutBody: 'Shelf owns your catalog: title, author, ISBN, pages, publication date, and genres. Reading status, current page, and ratings belong to Habits — Shelf shows them but never edits them.',
+    settingsViewOnboarding: 'View onboarding again',
+    devPanelTitle: 'Preview — jump to screen', devSeed: 'Load sample library', devReset: 'Reset demo',
+  },
+  fr: {
+    navHome: 'Accueil', navStats: 'Stats', navBadges: 'Badges', navBooks: 'Livres', navSettings: 'Réglages',
+    shelfTitle: 'Shelf', tabAll: 'Tout', tabGenre: 'Par genre', tabRecent: 'Récents',
+    filterByGenre: 'Filtrer par genre', apply: 'Appliquer', cancel: 'Annuler',
+    emptyTitle: 'Votre étagère est vide', emptyMessage: 'Scannez un code-barres ou une couverture pour cataloguer votre premier livre.', emptyCta: 'Scanner votre premier livre', emptyManual: 'ou ajouter manuellement',
+    addSheetScan: 'Scanner un livre', addSheetManual: 'Ajouter manuellement',
+    scanCancel: 'Annuler', modeBarcode: 'Code-barres', modeCover: 'Photo de couverture',
+    scanHint: 'Aucun code-barres trouvé — essayez « Photo de couverture »', tapToScan: 'Touchez pour simuler un scan',
+    scannedCount: '{n} scannés', reviewQueue: 'Vérifier la file ({n})', queueTitle: '{n} livres scannés', addReadyNow: 'Ajouter {n} maintenant',
+    statusReady: 'prêt', statusDuplicate: 'doublon', statusNeedsGenre: 'genre ?',
+    ocrTitle: 'Quel livre avez-vous scanné ?', ocrNone: 'Aucun de ceux-ci — recherche manuelle',
+    manualSearchLabel: 'Lecture OCR (modifiez si erronée) :',
+    dedupeTitle: 'Correspondance par titre + auteur', dedupeSubtitle: '(pas d\u2019ISBN au dossier)',
+    onShelf: 'Sur votre étagère', thisScan: 'Ce scan', missing: 'manquant', fillMissing: 'Compléter les détails manquants', addSeparate: 'Ajouter comme livre séparé',
+    genreConfirmTitle: 'Genre', fromApi: 'depuis l\u2019API :', confirm: 'Confirmer',
+    manualEntryTitle: 'Ajouter un livre', fieldTitle: 'Titre', fieldSubtitle: 'Sous-titre', fieldIsbn: 'ISBN', fieldPages: 'Pages',
+    fieldDatePublished: 'Date de publication', fieldCover: 'Couverture', fieldAuthors: 'Auteurs', fieldGenres: 'Genres', saveBook: 'Enregistrer', save: 'Enregistrer',
+    detailBack: '‹ Retour', detailIsbn: 'ISBN', detailPages: 'Pages', detailPublished: 'Publié', detailGenres: 'Genres',
+    readingStatusLabel: 'Statut de lecture (lecture seule)', readingOwnedNote: 'Géré par Habits — jamais modifié ici', statusLabel: 'Statut', currentPageLabel: 'Page',
+    statusNotStarted: 'Pas commencé', pageDash: '—',
+    onboardingSkip: 'Passer', onboardingNext: 'Suivant',
+    ob1Title: 'Découvrez Shelf', ob1Body: 'Shelf catalogue vos livres physiques — titre, auteur, ISBN, pages, genres. L\u2019app ne suit pas votre progression de lecture ; cela se passe dans Habits.',
+    ob2Title: 'Trois façons d\u2019ajouter un livre', ob2BodyScan: 'Scannez un code-barres pour une identification instantanée', ob2BodyPhoto: 'Prenez la couverture en photo et laissez l\u2019OCR la lire', ob2BodyManual: 'Ou saisissez les détails vous-même',
+    ob3Title: 'Les doublons sont détectés automatiquement', ob3Body: 'Si un scan correspond à un livre déjà sur votre étagère, Shelf le signale pour fusionner les détails au lieu de créer une copie.',
+    obScanCta: 'Scanner votre premier livre', obSkipToShelf: 'Passer à l\u2019étagère',
+    settingsTitle: 'Réglages', settingsNotion: 'Connexion Notion', settingsConnected: 'Connecté à Notion', settingsWorkspace: 'Espace de Jordan',
+    settingsReconnect: 'Se reconnecter', settingsDisconnect: 'Se déconnecter',
+    settingsLanguage: 'Langue', settingsAppearance: 'Apparence', settingsLight: 'Clair', settingsDark: 'Sombre', settingsSystem: 'Système',
+    settingsAccent: 'Thème d\u2019accent', settingsAbout: 'À propos',
+    settingsAboutBody: 'Shelf gère votre catalogue : titre, auteur, ISBN, pages, date de publication et genres. Le statut de lecture, la page actuelle et les notes appartiennent à Habits — Shelf les affiche sans jamais les modifier.',
+    settingsViewOnboarding: 'Revoir l\u2019introduction',
+    devPanelTitle: 'Aperçu — écrans', devSeed: 'Charger la bibliothèque', devReset: 'Réinitialiser',
+  },
+};
+
+const QUEUE_SCRIPT = [
+  { title: 'Mistborn', author: 'Brandon Sanderson', status: 'ready', genre: 'fantasy', isbn: '9780765311788', pages: 541, published: '2006' },
+  { title: 'Dune', author: 'Frank Herbert', status: 'duplicate', genre: 'scifi', isbn: '9780441013593', pages: 412, published: '1965' },
+  { title: 'LitRPG #4', author: '—', status: 'needs-genre', genre: null, suggestedGenre: 'scifi', apiCategory: 'Fiction / Science Fiction / Space Opera' },
+];
+
+const OCR_CANDIDATES = [
+  { title: 'Project Hail Mary', author: 'A. Weir', confidence: 92, genre: 'scifi' },
+  { title: 'Hail Mary (audio)', author: 'A. Weir', confidence: 61, genre: 'scifi' },
+];
+
+const MANUAL_SEARCH_POOL = [
+  { title: 'Project Hail Mary', author: 'Weir', confidence: 88, genre: 'scifi' },
+  { title: 'The Martian', author: 'Weir', confidence: 40, genre: 'scifi' },
+  { title: 'Artemis', author: 'Weir', confidence: 33, genre: 'scifi' },
+];
+
+const SEED_BOOKS = [
+  { title: 'Dune', author: 'Frank Herbert', genres: ['scifi'], isbn: '9780441013593', pages: 412, published: '1965', reading: { status: 'In progress', page: '140/412' } },
+  { title: 'Atomic Habits', author: 'James Clear', genres: ['selfhelp'], isbn: '9780735211292', pages: 320, published: '2018' },
+  { title: 'Mistborn', author: 'Brandon Sanderson', genres: ['fantasy'], isbn: '9780765311788', pages: 541, published: '2006' },
+  { title: 'Deep Work', author: 'Cal Newport', genres: ['business'], isbn: '9781455586691', pages: 296, published: '2016' },
+  { title: 'Project Hail Mary', author: 'Andy Weir', genres: ['scifi'], isbn: '9780593135204', pages: 476, published: '2021' },
+  { title: 'LitRPG #3', author: '—', genres: ['fantasy'], isbn: '', pages: '', published: '' },
+];
+
+class Component extends DCLogic {
+  state = {
+    screen: 'empty',
+    lang: this.props.lang || 'en',
+    themeMode: this.props.mode || 'dark',
+    accentTheme: this.props.accentTheme || 'terracotta',
+    books: [],
+    queue: [],
+    scanMode: 'barcode',
+    scannedCount: 0,
+    showHint: false,
+    activeTab: 'all',
+    filterGenres: [],
+    showFilterSheet: false,
+    showAddMenu: false,
+    selectedBookId: null,
+    activeQueueId: null,
+    genreSelectValue: 'scifi',
+    draft: this.emptyDraft(),
+    ocrGuess: 'proJect hall mary weir',
+  };
+
+  emptyDraft() {
+    return { title: '', subtitle: '', isbn: '', pages: '', datePublished: '', authors: '', genres: [] };
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.hintTimer);
+  }
+
+  go = (screen) => this.setState({ screen, showAddMenu: false });
+  goGrid = () => this.go('grid');
+  goSettings = () => this.go('settings');
+  goManualEntry = () => this.setState({ screen: 'manual-entry', draft: this.emptyDraft(), showAddMenu: false });
+  noop = () => {};
+
+  toggleAddMenu = () => this.setState((s) => ({ showAddMenu: !s.showAddMenu }));
+  closeFilterSheet = () => this.setState({ showFilterSheet: false });
+  setTabAll = () => this.setState({ activeTab: 'all', showFilterSheet: false });
+  setTabRecent = () => this.setState({ activeTab: 'recent', showFilterSheet: false });
+  setTabGenre = () => this.setState({ activeTab: 'genre', showFilterSheet: true });
+  toggleFilterGenre = (id) => this.setState((s) => {
+    const has = s.filterGenres.includes(id);
+    return { filterGenres: has ? s.filterGenres.filter((g) => g !== id) : [...s.filterGenres, id] };
+  });
+
+  armHintTimer() {
+    clearTimeout(this.hintTimer);
+    this.hintTimer = setTimeout(() => {
+      if (this.state.scanMode === 'barcode' && this.state.scannedCount === 0) this.setState({ showHint: true });
+    }, 2500);
+  }
+  startScan = () => {
+    clearTimeout(this.hintTimer);
+    this.setState({ screen: 'scan', scanMode: 'barcode', scannedCount: 0, queue: [], showHint: false, showAddMenu: false });
+    this.armHintTimer();
+  };
+  goScanFromQueue = () => { clearTimeout(this.hintTimer); this.setState({ screen: 'scan', showHint: false }); this.armHintTimer(); };
+  goScanCover = () => this.setState({ screen: 'scan' });
+  setModeBarcode = () => { clearTimeout(this.hintTimer); this.setState({ scanMode: 'barcode', showHint: false }); this.armHintTimer(); };
+  setModeCover = () => { clearTimeout(this.hintTimer); this.setState({ scanMode: 'cover', showHint: false }); };
+  goQueue = () => this.setState({ screen: 'queue' });
+
+  tapViewfinder = () => {
+    if (this.state.scanMode === 'cover') { this.setState({ screen: 'ocr-list' }); return; }
+    clearTimeout(this.hintTimer);
+    const idx = this.state.scannedCount;
+    if (idx >= QUEUE_SCRIPT.length) return;
+    const item = { ...QUEUE_SCRIPT[idx], qid: uid() };
+    this.setState((s) => ({ queue: [...s.queue, item], scannedCount: s.scannedCount + 1, showHint: false }));
+  };
+
+  openDedupe = (qid) => this.setState({ screen: 'dedupe', activeQueueId: qid });
+  openGenreConfirm = (qid) => {
+    const item = this.state.queue.find((q) => q.qid === qid);
+    this.setState({ screen: 'genre-confirm', activeQueueId: qid, genreSelectValue: (item && item.suggestedGenre) || 'scifi' });
+  };
+  setGenreSelectValue = (e) => this.setState({ genreSelectValue: e.target.value });
+
+  resolveMergeActive = () => {
+    const qid = this.state.activeQueueId;
+    this.setState((s) => {
+      const item = s.queue.find((q) => q.qid === qid);
+      if (!item) return null;
+      const merged = { id: uid(), title: item.title, author: item.author, genres: [item.genre], isbn: item.isbn, pages: item.pages, published: item.published, addedAt: Date.now() };
+      return { books: [...s.books, merged], queue: s.queue.filter((q) => q.qid !== qid), screen: 'queue' };
+    });
+  };
+  resolveSeparateActive = () => {
+    const qid = this.state.activeQueueId;
+    this.setState((s) => ({ queue: s.queue.map((q) => (q.qid === qid ? { ...q, status: 'ready' } : q)), screen: 'queue' }));
+  };
+  cancelDedupe = () => this.setState({ screen: 'queue' });
+
+  confirmGenreActive = () => {
+    const qid = this.state.activeQueueId;
+    const genre = this.state.genreSelectValue;
+    this.setState((s) => ({ queue: s.queue.map((q) => (q.qid === qid ? { ...q, genre, status: 'ready' } : q)), screen: 'queue' }));
+  };
+
+  addReadyNow = () => {
+    this.setState((s) => {
+      const ready = s.queue.filter((q) => q.status === 'ready');
+      const rest = s.queue.filter((q) => q.status !== 'ready');
+      const newBooks = ready.map((q, i) => ({ id: uid(), title: q.title, author: q.author, genres: [q.genre], isbn: q.isbn || '', pages: q.pages || '', published: q.published || '', addedAt: Date.now() + i }));
+      return { books: [...s.books, ...newBooks], queue: rest, screen: rest.length ? 'queue' : 'grid' };
+    });
+  };
+
+  goOcrList = () => this.setState({ screen: 'ocr-list' });
+  goManualSearch = () => this.setState({ screen: 'manual-search' });
+  addFromOcr = (cand) => this.setState((s) => ({ queue: [...s.queue, { qid: uid(), title: cand.title, author: cand.author, genre: cand.genre, status: 'ready' }], scannedCount: s.scannedCount + 1, screen: 'queue' }));
+  addFromManualSearch = (res) => this.setState((s) => ({ queue: [...s.queue, { qid: uid(), title: res.title, author: res.author, genre: res.genre, status: 'ready' }], scannedCount: s.scannedCount + 1, screen: 'queue' }));
+  onOcrGuessChange = (e) => this.setState({ ocrGuess: e.target.value });
+
+  updateDraft = (field, val) => this.setState((s) => ({ draft: { ...s.draft, [field]: val } }));
+  onDraftTitleChange = (e) => this.updateDraft('title', e.target.value);
+  onDraftSubtitleChange = (e) => this.updateDraft('subtitle', e.target.value);
+  onDraftIsbnChange = (e) => this.updateDraft('isbn', e.target.value);
+  onDraftPagesChange = (e) => this.updateDraft('pages', e.target.value);
+  onDraftDateChange = (e) => this.updateDraft('datePublished', e.target.value);
+  onDraftAuthorsChange = (e) => this.updateDraft('authors', e.target.value);
+  toggleDraftGenre = (id) => this.setState((s) => {
+    const has = s.draft.genres.includes(id);
+    return { draft: { ...s.draft, genres: has ? s.draft.genres.filter((g) => g !== id) : [...s.draft.genres, id] } };
+  });
+  saveManualEntry = () => {
+    const d = this.state.draft;
+    if (!d.title.trim()) { this.setState({ screen: 'grid' }); return; }
+    const book = { id: uid(), title: d.title, subtitle: d.subtitle, author: d.authors, isbn: d.isbn, pages: d.pages, published: d.datePublished, genres: d.genres, addedAt: Date.now() };
+    this.setState((s) => ({ books: [...s.books, book], draft: this.emptyDraft(), screen: 'grid' }));
+  };
+
+  selectBook = (id) => this.setState({ screen: 'detail', selectedBookId: id });
+  updateSelectedBook = (field, val) => this.setState((s) => ({ books: s.books.map((b) => (b.id === s.selectedBookId ? { ...b, [field]: val } : b)) }));
+  onDetailTitleChange = (e) => this.updateSelectedBook('title', e.target.value);
+  onDetailAuthorChange = (e) => this.updateSelectedBook('author', e.target.value);
+  onDetailIsbnChange = (e) => this.updateSelectedBook('isbn', e.target.value);
+  onDetailPagesChange = (e) => this.updateSelectedBook('pages', e.target.value);
+  onDetailPublishedChange = (e) => this.updateSelectedBook('published', e.target.value);
+  toggleBookGenre = (id) => this.setState((s) => ({
+    books: s.books.map((b) => {
+      if (b.id !== s.selectedBookId) return b;
+      const has = (b.genres || []).includes(id);
+      return { ...b, genres: has ? b.genres.filter((g) => g !== id) : [...(b.genres || []), id] };
+    }),
+  }));
+
+  skipOnboarding = () => this.go('empty');
+  goOnboarding2 = () => this.go('onboarding-2');
+  goOnboarding3 = () => this.go('onboarding-3');
+  finishOnboardingScan = () => this.startScan();
+  finishOnboardingSkip = () => this.go('empty');
+  viewOnboardingAgain = () => this.go('onboarding-1');
+
+  setLang = (l) => this.setState({ lang: l });
+  setMode = (m) => this.setState({ themeMode: m });
+  setAccent = (t) => this.setState({ accentTheme: t });
+
+  seedLibrary = () => this.setState((s) => ({ books: SEED_BOOKS.map((b, i) => ({ ...b, id: uid(), addedAt: Date.now() + i })), screen: 'grid' }));
+  resetDemo = () => {
+    clearTimeout(this.hintTimer);
+    this.setState({ screen: 'empty', books: [], queue: [], scanMode: 'barcode', scannedCount: 0, showHint: false, activeTab: 'all', filterGenres: [], showFilterSheet: false, showAddMenu: false, draft: this.emptyDraft() });
+  };
+
+  renderVals() {
+    const s = this.state;
+    const lang = s.lang;
+    const str = STRINGS[lang];
+    const systemDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = s.themeMode === 'dark' || (s.themeMode === 'system' && systemDark);
+    const neutrals = neutralTokens(isDark);
+    const themeDef = THEME_DEFS[s.accentTheme];
+    const tokens = {
+      ...neutrals,
+      accent: themeDef.accent,
+      secondary: themeDef.secondary,
+      accentSoft: isDark ? themeDef.accentSoftD : themeDef.accentSoftL,
+      secondarySoft: isDark ? themeDef.secondarySoftD : themeDef.secondarySoftL,
+    };
+
+    const genreLabel = (id) => { const g = GENRES.find((x) => x.id === id); return g ? g[lang] : ''; };
+    const genreHue = (id) => { const g = GENRES.find((x) => x.id === id); return g ? g.hue : 0; };
+    const coverColor = (id) => `oklch(0.5 0.1 ${genreHue(id)})`;
+
+    let books = s.books;
+    if (s.activeTab === 'genre' && s.filterGenres.length) books = books.filter((b) => (b.genres || []).some((g) => s.filterGenres.includes(g)));
+    if (s.activeTab === 'recent') books = [...books].sort((a, b) => b.addedAt - a.addedAt);
+    else books = [...books].sort((a, b) => a.title.localeCompare(b.title));
+
+    const gridBooks = books.map((b) => ({
+      ...b,
+      coverColor: coverColor((b.genres || [])[0]),
+      genreLabel: genreLabel((b.genres || [])[0]),
+      onSelect: () => this.selectBook(b.id),
+    }));
+
+    const queueReadyCount = s.queue.filter((q) => q.status === 'ready').length;
+    const queueView = s.queue.map((q) => ({
+      ...q,
+      statusLabel: q.status === 'ready' ? str.statusReady : q.status === 'duplicate' ? str.statusDuplicate : str.statusNeedsGenre,
+      borderColor: q.status === 'duplicate' ? tokens.alert : tokens.border,
+      statusColor: q.status === 'ready' ? tokens.accent : q.status === 'duplicate' ? tokens.alert : tokens.muted,
+      onOpen: q.status === 'duplicate' ? () => this.openDedupe(q.qid) : q.status === 'needs-genre' ? () => this.openGenreConfirm(q.qid) : () => {},
+    }));
+
+    const selectedBook = s.books.find((b) => b.id === s.selectedBookId);
+    const selectedBookView = selectedBook ? {
+      ...selectedBook,
+      coverColor: coverColor((selectedBook.genres || [])[0]),
+      readingStatus: selectedBook.reading ? selectedBook.reading.status : str.statusNotStarted,
+      readingPage: selectedBook.reading ? selectedBook.reading.page : str.pageDash,
+    } : { title: '', author: '', isbn: '', pages: '', published: '', coverColor: tokens.track, readingStatus: '', readingPage: '' };
+
+    const dedupeQItem = s.queue.find((q) => q.qid === s.activeQueueId);
+    const dedupeItem = dedupeQItem ? { ...dedupeQItem, coverColor: coverColor(dedupeQItem.genre) } : { title: '', author: '', isbn: '', pages: '', coverColor: tokens.track };
+
+    const genreConfirmQItem = s.queue.find((q) => q.qid === s.activeQueueId);
+    const genreConfirmItem = genreConfirmQItem || { apiCategory: '' };
+
+    const filterGenreOptions = GENRES.map((g) => {
+      const checked = s.filterGenres.includes(g.id);
+      return { id: g.id, label: g[lang], checked, borderColor: checked ? tokens.accent : tokens.border, bgColor: checked ? tokens.accent : 'transparent', onToggle: () => this.toggleFilterGenre(g.id) };
+    });
+    const draftGenreOptions = GENRES.map((g) => {
+      const selected = s.draft.genres.includes(g.id);
+      return { id: g.id, label: g[lang], selected, borderColor: selected ? tokens.accent : tokens.border, textColor: selected ? tokens.accent : tokens.muted, bgColor: selected ? tokens.accentSoft : 'transparent', onToggle: () => this.toggleDraftGenre(g.id) };
+    });
+    const detailGenreOptions = GENRES.map((g) => {
+      const selected = ((selectedBook && selectedBook.genres) || []).includes(g.id);
+      return { id: g.id, label: g[lang], selected, borderColor: selected ? tokens.accent : tokens.border, textColor: selected ? tokens.accent : tokens.muted, bgColor: selected ? tokens.accentSoft : 'transparent', onToggle: () => this.toggleBookGenre(g.id) };
+    });
+    const genreSelectOptions = GENRES.map((g) => ({ id: g.id, label: g[lang] }));
+
+    const ocrCandidatesView = OCR_CANDIDATES.map((c) => ({ ...c, onSelect: () => this.addFromOcr(c) }));
+    const manualSearchResultsView = s.ocrGuess.trim() ? MANUAL_SEARCH_POOL.map((r) => ({ ...r, onSelect: () => this.addFromManualSearch(r) })) : [];
+
+    const scannedThumbs = s.queue.map((q) => ({ color: coverColor(q.genre) }));
+
+    const langOptions = [
+      { id: 'en', label: 'English', selected: lang === 'en', onSelect: () => this.setLang('en') },
+      { id: 'fr', label: 'Français', selected: lang === 'fr', onSelect: () => this.setLang('fr') },
+    ].map((o) => ({ ...o, bg: o.selected ? tokens.surface : 'transparent', color: o.selected ? tokens.text : tokens.muted }));
+    const modeOptions = [
+      { id: 'light', label: str.settingsLight, selected: s.themeMode === 'light', onSelect: () => this.setMode('light') },
+      { id: 'dark', label: str.settingsDark, selected: s.themeMode === 'dark', onSelect: () => this.setMode('dark') },
+      { id: 'system', label: str.settingsSystem, selected: s.themeMode === 'system', onSelect: () => this.setMode('system') },
+    ].map((o) => ({ ...o, bg: o.selected ? tokens.surface : 'transparent', color: o.selected ? tokens.text : tokens.muted }));
+    const themeOptions = Object.keys(THEME_DEFS).map((k) => ({
+      id: k,
+      label: lang === 'fr' ? THEME_DEFS[k].nameFr : THEME_DEFS[k].nameEn,
+      accent: THEME_DEFS[k].accent,
+      secondary: THEME_DEFS[k].secondary,
+      selected: s.accentTheme === k,
+      borderColor: s.accentTheme === k ? tokens.text : tokens.border,
+      onSelect: () => this.setAccent(k),
+    }));
+
+    const devScreenDefs = [
+      ['empty', 'Empty state'], ['grid', 'Shelf grid'], ['scan', 'Scan'], ['queue', 'Queue review'],
+      ['ocr-list', 'OCR ranked list'], ['manual-search', 'OCR manual search'], ['dedupe', 'Dedupe dialog'],
+      ['genre-confirm', 'Genre confirm'], ['manual-entry', 'Manual entry'], ['detail', 'Book detail'],
+      ['onboarding-1', 'Onboarding 1'], ['onboarding-2', 'Onboarding 2'], ['onboarding-3', 'Onboarding 3'], ['settings', 'Settings'],
+    ];
+    const devScreens = devScreenDefs.map(([id, label]) => ({ id, label: s.screen === id ? '› ' + label : label, onGo: () => this.go(id) }));
+
+    const is = {
+      empty: s.screen === 'empty', grid: s.screen === 'grid', scan: s.screen === 'scan', queue: s.screen === 'queue',
+      ocrList: s.screen === 'ocr-list', manualSearch: s.screen === 'manual-search', dedupe: s.screen === 'dedupe',
+      genreConfirm: s.screen === 'genre-confirm', manualEntry: s.screen === 'manual-entry', detail: s.screen === 'detail',
+      settings: s.screen === 'settings', ob1: s.screen === 'onboarding-1', ob2: s.screen === 'onboarding-2', ob3: s.screen === 'onboarding-3',
+    };
+
+    const navBooksActive = is.empty || is.grid || is.detail;
+    const navSettingsActive = is.settings;
+    const tabAllActive = s.activeTab === 'all', tabGenreActive = s.activeTab === 'genre', tabRecentActive = s.activeTab === 'recent';
+    const queueEmpty = s.queue.length === 0;
+    const queueReadyEmpty = queueReadyCount === 0;
+
+    return {
+      str, tokens, isDark, is,
+      showBottomNav: is.empty || is.grid || is.settings,
+      navBooksColor: navBooksActive ? tokens.accent : tokens.muted,
+      navSettingsColor: navSettingsActive ? tokens.accent : tokens.muted,
+      tabAllColor: tabAllActive ? tokens.text : tokens.muted, tabAllBorder: tabAllActive ? tokens.accent : 'transparent',
+      tabGenreColor: tabGenreActive ? tokens.text : tokens.muted, tabGenreBorder: tabGenreActive ? tokens.accent : 'transparent',
+      tabRecentColor: tabRecentActive ? tokens.text : tokens.muted, tabRecentBorder: tabRecentActive ? tokens.accent : 'transparent',
+      gridBooks, showAddMenu: s.showAddMenu, showFilterSheet: s.showFilterSheet, filterGenreOptions,
+      selectedBookView, detailGenreOptions,
+      scanMode: s.scanMode, showHint: s.showHint, queueEmpty,
+      modeBarcodeBg: s.scanMode === 'barcode' ? '#fff' : 'transparent', modeBarcodeColor: s.scanMode === 'barcode' ? '#111' : 'rgba(255,255,255,0.7)',
+      modeCoverBg: s.scanMode === 'cover' ? '#fff' : 'transparent', modeCoverColor: s.scanMode === 'cover' ? '#111' : 'rgba(255,255,255,0.7)',
+      reviewBtnBg: queueEmpty ? 'rgba(255,255,255,0.12)' : tokens.accent, reviewBtnColor: queueEmpty ? 'rgba(255,255,255,0.4)' : '#fff',
+      scannedCountLabel: str.scannedCount.replace('{n}', s.scannedCount), reviewQueueLabel: str.reviewQueue.replace('{n}', s.queue.length),
+      scannedThumbs,
+      queueView, queueReadyCount, queueReadyEmpty, queueTitleLabel: str.queueTitle.replace('{n}', s.queue.length), addReadyLabel: str.addReadyNow.replace('{n}', queueReadyCount),
+      addReadyBtnBg: queueReadyEmpty ? tokens.track : tokens.accent, addReadyBtnColor: queueReadyEmpty ? tokens.muted : '#fff',
+      ocrCandidatesView, ocrGuess: s.ocrGuess, manualSearchResultsView,
+      dedupeItem, genreConfirmItem, genreSelectValue: s.genreSelectValue, genreSelectOptions,
+      draft: s.draft, draftGenreOptions,
+      langOptions, modeOptions, themeOptions,
+      devScreens,
+      goGrid: this.goGrid, goSettings: this.goSettings, goManualEntry: this.goManualEntry, noop: this.noop,
+      startScan: this.startScan, goScanFromQueue: this.goScanFromQueue, goScanCover: this.goScanCover,
+      setModeBarcode: this.setModeBarcode, setModeCover: this.setModeCover, goQueue: this.goQueue, tapViewfinder: this.tapViewfinder,
+      toggleAddMenu: this.toggleAddMenu, closeFilterSheet: this.closeFilterSheet, setTabAll: this.setTabAll, setTabRecent: this.setTabRecent, setTabGenre: this.setTabGenre,
+      addReadyNow: this.addReadyNow, resolveMergeActive: this.resolveMergeActive, resolveSeparateActive: this.resolveSeparateActive, cancelDedupe: this.cancelDedupe,
+      goOcrList: this.goOcrList, goManualSearch: this.goManualSearch, onOcrGuessChange: this.onOcrGuessChange,
+      onGenreSelectChange: this.setGenreSelectValue, confirmGenreActive: this.confirmGenreActive,
+      onDraftTitleChange: this.onDraftTitleChange, onDraftSubtitleChange: this.onDraftSubtitleChange, onDraftIsbnChange: this.onDraftIsbnChange,
+      onDraftPagesChange: this.onDraftPagesChange, onDraftDateChange: this.onDraftDateChange, onDraftAuthorsChange: this.onDraftAuthorsChange,
+      saveManualEntry: this.saveManualEntry,
+      onDetailTitleChange: this.onDetailTitleChange, onDetailAuthorChange: this.onDetailAuthorChange, onDetailIsbnChange: this.onDetailIsbnChange,
+      onDetailPagesChange: this.onDetailPagesChange, onDetailPublishedChange: this.onDetailPublishedChange,
+      skipOnboarding: this.skipOnboarding, goOnboarding2: this.goOnboarding2, goOnboarding3: this.goOnboarding3,
+      finishOnboardingScan: this.finishOnboardingScan, finishOnboardingSkip: this.finishOnboardingSkip, viewOnboardingAgain: this.viewOnboardingAgain,
+      seedLibrary: this.seedLibrary, resetDemo: this.resetDemo,
+    };
+  }
+}
+
+</script>
+</body>
+</html>
