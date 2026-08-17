@@ -99,8 +99,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get scanCoverCaptureFailed =>
-      'Couldn\'t capture the cover photo — try again.';
+  String scanCoverCaptureFailed(String message) {
+    return 'Couldn\'t capture the cover photo: $message';
+  }
 
   @override
   String get scanCoverNoText =>

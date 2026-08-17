@@ -44,11 +44,14 @@ class ScanScreen extends ConsumerStatefulWidget {
 }
 
 class _ScanScreenState extends ConsumerState<ScanScreen> {
-  // Restricted to EAN-13 since that's the only symbology a book ISBN
-  // barcode uses (our own detection filter already assumes it) — mostly a
-  // minor decode-efficiency win, not expected to rescue a barcode Vision
-  // can't parse at all, per NBLB-8's investigation.
-  final _controller = MobileScannerController(returnImage: true, formats: const [BarcodeFormat.ean13]);
+  // Reverted NBLB-8's `formats: [BarcodeFormat.ean13]` restriction (see
+  // NBLB-9) — cover-mode capture started failing outright right after that
+  // change landed, and cover mode shares this same controller/analysis
+  // pipeline even though it doesn't care about barcode formats at all.
+  // Wasn't expected to help barcode detection much anyway (mobile_scanner's
+  // own default is already "detect everything"); not worth the risk of it
+  // being what's starving cover mode of frames.
+  final _controller = MobileScannerController(returnImage: true);
   final _lookupService = BookLookupService();
   final _textRecognizer = TextRecognizer();
   final _recentIsbns = <String>{};
@@ -147,7 +150,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       // whatever the camera was pointed at a moment earlier.
       final request = Completer<BarcodeCapture>();
       _freshFrameRequest = request;
-      final capture = await request.future.timeout(const Duration(seconds: 3));
+      final capture = await request.future.timeout(const Duration(seconds: 5));
       final image = capture.image;
       if (image == null) throw StateError('captured frame had no image bytes');
 
@@ -169,7 +172,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       debugPrint('ScanScreen: cover capture failed: $e');
       if (mounted) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scanCoverCaptureFailed)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scanCoverCaptureFailed('$e'))));
       }
     } finally {
       _freshFrameRequest = null;

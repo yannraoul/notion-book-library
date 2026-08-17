@@ -269,8 +269,8 @@ abstract class AppLocalizations {
   /// No description provided for @scanCoverCaptureFailed.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t capture the cover photo — try again.'**
-  String get scanCoverCaptureFailed;
+  /// **'Couldn\'t capture the cover photo: {message}'**
+  String scanCoverCaptureFailed(String message);
 
   /// No description provided for @scanCoverNoText.
   ///

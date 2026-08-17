@@ -42,7 +42,10 @@
   "@scanCameraError": {
     "placeholders": {"message": {"type": "String"}}
   },
-  "scanCoverCaptureFailed": "Couldn't capture the cover photo — try again.",
+  "scanCoverCaptureFailed": "Couldn't capture the cover photo: {message}",
+  "@scanCoverCaptureFailed": {
+    "placeholders": {"message": {"type": "String"}}
+  },
   "scanCoverNoText": "Couldn't read any text on that cover — try again or search manually.",
 
   "scannedCount": "{count} scanned",
