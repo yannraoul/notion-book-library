@@ -18,3 +18,4 @@ is just the index.
 - [NBLB-2](bugs/NBLB-2.md) — iOS home screen showed "Notion Book Library" instead of "Shelf"
 - [NBLB-3](bugs/NBLB-3.md) — iOS scan pipeline: barcode never detected, cover capture silently fails
 - [NBLB-4](bugs/NBLB-4.md) — search confidence ranked author-name-in-title above the real title
+- [NBLB-5](bugs/NBLB-5.md) — bottom nav bar didn't extend to the bottom of the screen like the Habits app

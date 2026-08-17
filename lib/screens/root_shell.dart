@@ -29,31 +29,33 @@ class RootShell extends ConsumerWidget {
           children: const [HomeScreen(), SettingsScreen()],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          decoration: BoxDecoration(
-            color: tokens.surface,
-            border: Border(top: BorderSide(color: tokens.border)),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-          child: Row(
-            children: [
-              _NavItem(
-                label: l10n.navHome,
-                active: selectedTab == 0,
-                activeColor: tokens.accent,
-                mutedColor: tokens.muted,
-                onTap: () => ref.read(selectedTabProvider.notifier).state = 0,
-              ),
-              _NavItem(
-                label: l10n.navSettings,
-                active: selectedTab == 1,
-                activeColor: tokens.accent,
-                mutedColor: tokens.muted,
-                onTap: () => ref.read(selectedTabProvider.notifier).state = 1,
-              ),
-            ],
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          color: tokens.surface,
+          border: Border(top: BorderSide(color: tokens.border)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            child: Row(
+              children: [
+                _NavItem(
+                  label: l10n.navHome,
+                  active: selectedTab == 0,
+                  activeColor: tokens.accent,
+                  mutedColor: tokens.muted,
+                  onTap: () => ref.read(selectedTabProvider.notifier).state = 0,
+                ),
+                _NavItem(
+                  label: l10n.navSettings,
+                  active: selectedTab == 1,
+                  activeColor: tokens.accent,
+                  mutedColor: tokens.muted,
+                  onTap: () => ref.read(selectedTabProvider.notifier).state = 1,
+                ),
+              ],
+            ),
           ),
         ),
       ),
