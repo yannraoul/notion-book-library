@@ -99,6 +99,8 @@
   "fieldAuthors": "Auteurs",
   "fieldGenres": "Genres",
   "fieldCoverUrlHint": "URL de l’image de couverture (facultatif)",
+  "coverUploadButton": "Importer une image…",
+  "coverUrlOrHint": "ou collez une URL d’image",
   "saveBook": "Enregistrer",
   "manualEntrySaving": "Enregistrement…",
   "manualEntryError": "Impossible d’enregistrer : {message}",

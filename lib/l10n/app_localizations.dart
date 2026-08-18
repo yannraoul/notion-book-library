@@ -482,6 +482,18 @@ abstract class AppLocalizations {
   /// **'Cover image URL (optional)'**
   String get fieldCoverUrlHint;
 
+  /// No description provided for @coverUploadButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload image…'**
+  String get coverUploadButton;
+
+  /// No description provided for @coverUrlOrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'or paste an image URL'**
+  String get coverUrlOrHint;
+
   /// No description provided for @saveBook.
   ///
   /// In en, this message translates to:

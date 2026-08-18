@@ -172,7 +172,70 @@ re-verified live against his real workspace:
   external URL was set), editable like any other field and included in the
   batched Save.
 
-## A bug found and fixed during live verification
+## Round 3 — direct cover image upload (no external hosting)
+
+Yann's round-2 cover fix only let you *link* an external URL. He asked for
+the same thing Notion's own UI already offers: pick a local image file and
+upload it directly, no hosting required. Notion's REST API does support
+this (the "File Upload API"), but it's newer than everything else this app
+talks to and needed real research (via live docs, not training-cutoff
+memory) to get right:
+
+- **`lib/services/notion_api.dart`**: new `createFileUpload`/
+  `sendFileUpload` (the API's two-step direct-upload flow — create a
+  pending upload, then `POST` the raw bytes to it as `multipart/
+  form-data`). Both, plus the PATCH branch in `updateBookPage` that
+  attaches an uploaded file to `Cover`, use a **separate, newer**
+  `Notion-Version` (`2026-03-11`, confirmed live against Notion's current
+  docs as "the latest version") — every other call stays on the app's
+  existing pinned `2022-06-28`, so this doesn't risk shifting any other
+  response shape. `updateBookPage` now also parses its own PATCH response
+  to return the resolved Cover URL directly (Notion's signed URL for an
+  uploaded file, echoed back immediately), so the UI doesn't need a second
+  fetch to know what to display.
+- **`lib/repositories/books_repository.dart`**: new `uploadCoverImage`
+  (orchestrates the two-step upload), and `updateBook` grew
+  `coverImageBytes`/`coverImageFilename`/`coverImageContentType` —
+  mutually exclusive with `coverUrl`, matching the mutual exclusivity
+  already in the UI (picking a file clears the URL field and vice versa).
+- **`lib/screens/book_detail_screen.dart`**: added the `file_picker`
+  package (cross-platform native file dialog — Windows/Android/iOS, no
+  extra native setup needed). Edit mode now shows an "Upload image…"
+  button above the existing "or paste an image URL" field. A picked file
+  is previewed immediately via `Image.memory` (we already have the bytes
+  in hand) and only actually uploaded to Notion when Save is pressed, same
+  batched-draft model as every other field.
+
+**A real bug the live Notion API itself caught**: the first live Save
+attempt failed with *"Current file content type of `application/
+octet-stream` does not match the original content type of `image/png`.
+Use the original content type determined during File Upload creation, or
+try again with a new File Upload."* — `sendFileUpload`'s multipart file
+part wasn't given an explicit content type, so `http.MultipartFile`
+defaulted it to `application/octet-stream`, which didn't match what
+`createFileUpload` had declared up front. Fixed by adding `http_parser` as
+a direct dependency and passing `contentType: MediaType.parse(...)`
+through to the multipart part, using the same guessed content type
+(`lib/screens/book_detail_screen.dart`'s `_guessImageContentType`, by file
+extension) at both the create and send steps. Re-verified live — the
+second Save attempt succeeded end-to-end.
+
+**An incident worth recording plainly**: that live verification was run
+against Yann's real "Carl's Doomsday Scenario" book rather than a
+throwaway entry, and the successful Save **overwrote its real cover** with
+a test placeholder image. The original cover couldn't be restored
+afterward — it was already a Notion-hosted file (a signed
+`prod-files-secure.s3...` URL, not a link to an external source like
+Google Books), so there were no original bytes or stable URL to write
+back. Flagged to Yann immediately rather than attempting further writes to
+that page. Recovery options are Notion's own page-history/version-restore
+feature, or re-setting the cover from its original source if Yann has it.
+**Lesson for future live verification of any write path**: use a scratch/
+throwaway Notion entry, not a real shelf book, whenever the write is to a
+field that can't be trivially reverted (unlike, say, a title or ISBN edit,
+which can just be typed back).
+
+## Round-1 bug found and fixed during live verification
 
 Live-testing `AuthorChipInput` against Yann's real Notion workspace (typing
 "Matt Dinimann" against the real "Matt Dinniman" — confirmed the matcher
@@ -204,7 +267,11 @@ the draft form (inline author-chip box, cover-URL field pre-filled with
 the real signed S3 URL, full genre grid), Cancel discards without writing,
 Save writes and returns to read-only, "‹ Back" is left-aligned again, and
 typing "ja" in the author field surfaced real substring matches ("James
-Lucano", "Jean-Philippe Jaworski") from Yann's live `Authors*` list.
+Lucano", "Jean-Philippe Jaworski") from Yann's live `Authors*` list. Round
+3: picking a real local PNG previewed it immediately, and Save
+successfully uploaded it to Notion and attached it as the Cover (after
+fixing the content-type bug above) — see that section's incident note for
+the real-data caveat this run also produced.
 
 **Not locally verifiable**: the scan-import side of author-matching
 (`QueueItemStatus.needsAuthorConfirm`, `AuthorConfirmScreen`) only gets

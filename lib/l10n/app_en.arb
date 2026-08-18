@@ -99,6 +99,8 @@
   "fieldAuthors": "Authors",
   "fieldGenres": "Genres",
   "fieldCoverUrlHint": "Cover image URL (optional)",
+  "coverUploadButton": "Upload image…",
+  "coverUrlOrHint": "or paste an image URL",
   "saveBook": "Save book",
   "manualEntrySaving": "Saving…",
   "manualEntryError": "Couldn't save: {message}",

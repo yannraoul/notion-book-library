@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../models/book.dart';
 
@@ -15,13 +17,21 @@ class NotionApi {
   // Pinned so response shapes don't shift under us without a deliberate bump.
   static const _notionVersion = '2022-06-28';
 
+  /// The File Upload API (NBLM-12's "upload a cover from disk" path) is
+  /// newer than [_notionVersion] and confirmed (live, against the current
+  /// Notion API docs) to need at least this version — used only by
+  /// [createFileUpload]/[sendFileUpload] and the PATCH in [updateBookPage]
+  /// when writing a `file_upload` cover reference, so every other call
+  /// stays on the pinned version untouched.
+  static const _fileUploadNotionVersion = '2026-03-11';
+
   final http.Client _client;
 
   NotionApi({http.Client? client}) : _client = client ?? http.Client();
 
-  Map<String, String> _headers(String token) => {
+  Map<String, String> _headers(String token, {String? version}) => {
         'Authorization': 'Bearer $token',
-        'Notion-Version': _notionVersion,
+        'Notion-Version': version ?? _notionVersion,
         'Content-Type': 'application/json',
       };
 
@@ -167,7 +177,17 @@ class NotionApi {
   /// `status`/`currentPage`/`dateStarted`/`dateFinished`/`rating` — not
   /// just unused but structurally absent, so no caller can wire a
   /// Habits-owned field through this method even by accident.
-  Future<void> updateBookPage(
+  ///
+  /// [coverUrl] and [coverFileUploadId] are mutually exclusive — pass
+  /// [coverFileUploadId] (from [sendFileUpload]) to point Cover at a file
+  /// uploaded directly to Notion, or [coverUrl] for an external link; that
+  /// branch also switches this call onto [_fileUploadNotionVersion], the
+  /// only thing that ever does. Returns the resolved Cover URL from
+  /// Notion's response (its own signed URL for an uploaded file, or the
+  /// external URL echoed back) so callers don't need a second fetch to
+  /// know what to display immediately — `null` if Cover wasn't touched or
+  /// the response didn't include it.
+  Future<String?> updateBookPage(
     String token,
     String pageId, {
     String? title,
@@ -175,6 +195,8 @@ class NotionApi {
     int? pages,
     DateTime? publishedDate,
     String? coverUrl,
+    String? coverFileUploadId,
+    String? coverFilename,
     List<String>? authorPageIds,
     List<String>? genrePageIds,
   }) async {
@@ -183,15 +205,68 @@ class NotionApi {
       if (isbn != null) 'ISBN': _richTextProperty(isbn),
       if (pages != null) 'Pages': _numberProperty(pages),
       if (publishedDate != null) 'Date published': _dateProperty(publishedDate),
-      if (coverUrl != null) 'Cover': _externalFileProperty(coverUrl),
+      if (coverFileUploadId != null)
+        'Cover': {
+          'files': [
+            {'name': coverFilename ?? 'cover', 'type': 'file_upload', 'file_upload': {'id': coverFileUploadId}},
+          ],
+        }
+      else if (coverUrl != null)
+        'Cover': _externalFileProperty(coverUrl),
       if (authorPageIds != null) 'Authors': _relationProperty(authorPageIds),
       if (genrePageIds != null) 'Genres': _relationProperty(genrePageIds),
     };
     final response = await _client.patch(
       Uri.parse('$_baseUrl/pages/$pageId'),
-      headers: _headers(token),
+      headers: _headers(token, version: coverFileUploadId != null ? _fileUploadNotionVersion : null),
       body: jsonEncode({'properties': properties}),
     );
+    _throwIfError(response);
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final props = body['properties'] as Map<String, dynamic>?;
+    return props == null ? null : _firstFileUrl(props['Cover'] as Map<String, dynamic>?);
+  }
+
+  /// Step 1 of Notion's direct file-upload flow (no external hosting
+  /// needed) — `POST /v1/file_uploads`, single-part mode (files under
+  /// 20MB, which every book cover is). Returns the new upload's id and the
+  /// URL [sendFileUpload] posts the actual bytes to.
+  Future<({String id, String uploadUrl})> createFileUpload(
+    String token, {
+    required String filename,
+    required String contentType,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$_baseUrl/file_uploads'),
+      headers: _headers(token, version: _fileUploadNotionVersion),
+      body: jsonEncode({'mode': 'single_part', 'filename': filename, 'content_type': contentType}),
+    );
+    _throwIfError(response);
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return (id: body['id'] as String, uploadUrl: body['upload_url'] as String);
+  }
+
+  /// Step 2 — `POST` the raw bytes to the `uploadUrl` from
+  /// [createFileUpload] as `multipart/form-data`. Once this returns
+  /// successfully the upload's status is `uploaded` and it's immediately
+  /// usable in a page property (no separate "complete" call needed for a
+  /// single-part upload). [contentType] must match what was declared to
+  /// [createFileUpload] — confirmed live: Notion rejects the send with a
+  /// 400 ("does not match the original content type") if this part is
+  /// left at `MultipartFile`'s own default (`application/octet-stream`).
+  Future<void> sendFileUpload(
+    String token,
+    String uploadUrl,
+    Uint8List bytes, {
+    required String filename,
+    required String contentType,
+  }) async {
+    final request = http.MultipartRequest('POST', Uri.parse(uploadUrl))
+      ..headers['Authorization'] = 'Bearer $token'
+      ..headers['Notion-Version'] = _fileUploadNotionVersion
+      ..files.add(http.MultipartFile.fromBytes('file', bytes, filename: filename, contentType: MediaType.parse(contentType)));
+    final streamedResponse = await _client.send(request);
+    final response = await http.Response.fromStream(streamedResponse);
     _throwIfError(response);
   }
 

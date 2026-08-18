@@ -218,6 +218,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldCoverUrlHint => 'Cover image URL (optional)';
 
   @override
+  String get coverUploadButton => 'Upload image…';
+
+  @override
+  String get coverUrlOrHint => 'or paste an image URL';
+
+  @override
   String get saveBook => 'Save book';
 
   @override

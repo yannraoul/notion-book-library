@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,6 +47,14 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
   List<String> _draftAuthors = [];
   Set<String> _draftGenres = {};
 
+  /// A freshly-picked local image, staged for upload on Save — takes
+  /// priority over [_coverUrlController] when both are set (picking a file
+  /// clears the URL field, see [_pickCoverImage]). Previewed immediately
+  /// via `Image.memory` since we already have the bytes, without waiting
+  /// for the round trip to Notion.
+  Uint8List? _draftCoverBytes;
+  String? _draftCoverFilename;
+
   List<String>? _liveGenres;
 
   @override
@@ -87,11 +98,36 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
       _draftPublishedDate = _book.publishedDate;
       _draftAuthors = List.of(_book.authors);
       _draftGenres = Set.of(_book.genres);
+      _draftCoverBytes = null;
+      _draftCoverFilename = null;
       _editing = true;
     });
   }
 
   void _cancelEditing() => setState(() => _editing = false);
+
+  Future<void> _pickCoverImage() async {
+    final result = await FilePicker.pickFiles(type: FileType.image, withData: true);
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    if (file.bytes == null) return;
+    setState(() {
+      _draftCoverBytes = file.bytes;
+      _draftCoverFilename = file.name;
+      _coverUrlController.clear();
+    });
+  }
+
+  String _guessImageContentType(String filename) {
+    final ext = filename.toLowerCase().split('.').last;
+    return switch (ext) {
+      'png' => 'image/png',
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'webp' => 'image/webp',
+      'gif' => 'image/gif',
+      _ => 'application/octet-stream',
+    };
+  }
 
   Future<void> _save() async {
     final connection = ref.read(notionConnectionProvider);
@@ -109,7 +145,10 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
         isbn: _isbnController.text.trim().isEmpty ? null : _isbnController.text.trim(),
         pages: int.tryParse(_pagesController.text.trim()),
         publishedDate: _draftPublishedDate,
-        coverUrl: _coverUrlController.text.trim(),
+        coverUrl: _draftCoverBytes == null ? _coverUrlController.text.trim() : null,
+        coverImageBytes: _draftCoverBytes,
+        coverImageFilename: _draftCoverFilename,
+        coverImageContentType: _draftCoverFilename == null ? null : _guessImageContentType(_draftCoverFilename!),
         authorNames: _draftAuthors,
         genreNames: _draftGenres.toList(),
       );
@@ -176,14 +215,40 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
                   AppSpacing.screenHorizontalPadding,
                 ),
                 children: [
-                  Center(child: BookCover(book: _book, width: 150, height: 225)),
+                  Center(
+                    child: _draftCoverBytes != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.memory(_draftCoverBytes!, width: 150, height: 225, fit: BoxFit.cover),
+                          )
+                        : BookCover(book: _book, width: 150, height: 225),
+                  ),
                   if (_editing) ...[
                     const SizedBox(height: 10),
                     Text(l10n.fieldCover, textAlign: TextAlign.center, style: AppTypography.sectionLabel(tokens.muted)),
                     const SizedBox(height: 6),
+                    Center(
+                      child: OutlinedButton.icon(
+                        onPressed: _pickCoverImage,
+                        icon: const Icon(Icons.upload_rounded, size: 16),
+                        label: Text(l10n.coverUploadButton, style: const TextStyle(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: tokens.text,
+                          side: BorderSide(color: tokens.border),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(l10n.coverUrlOrHint, textAlign: TextAlign.center, style: TextStyle(color: tokens.muted, fontSize: 11.5)),
+                    const SizedBox(height: 6),
                     TextField(
                       controller: _coverUrlController,
                       textAlign: TextAlign.center,
+                      onChanged: (_) => setState(() {
+                        _draftCoverBytes = null;
+                        _draftCoverFilename = null;
+                      }),
                       style: TextStyle(color: tokens.text, fontSize: 13),
                       decoration: InputDecoration(
                         isDense: true,

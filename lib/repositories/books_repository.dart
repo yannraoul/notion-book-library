@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../database/books_cache.dart';
 import '../models/book.dart';
 import '../services/notion_api.dart';
@@ -162,6 +164,14 @@ class BooksRepository {
   /// carried through untouched: this method has no parameter for it at
   /// all, so there's no way for a caller to accidentally overwrite a
   /// Habits-owned field through this path.
+  ///
+  /// [coverUrl] and [coverImageBytes] are mutually exclusive — pass
+  /// [coverImageBytes] (+ [coverImageFilename]/[coverImageContentType]) to
+  /// upload a local image directly to Notion (no external hosting, same as
+  /// picking a file in Notion's own UI) instead of linking an external
+  /// URL. The uploaded file is attached and resolved to Notion's own
+  /// signed URL before this returns, via [NotionApi.updateBookPage]'s
+  /// response — no extra round trip needed.
   Future<Book> updateBook({
     required String token,
     required String authorsDbId,
@@ -172,19 +182,32 @@ class BooksRepository {
     int? pages,
     DateTime? publishedDate,
     String? coverUrl,
+    Uint8List? coverImageBytes,
+    String? coverImageFilename,
+    String? coverImageContentType,
     List<String>? authorNames,
     List<String>? genreNames,
   }) async {
     final authorIds = authorNames == null ? null : await resolveAuthorIds(token, authorsDbId, authorNames);
     final genreIds = genreNames == null ? null : await resolveGenreIds(token, genresDbId, genreNames);
-    await api.updateBookPage(
+    final coverFileUploadId = coverImageBytes == null
+        ? null
+        : await uploadCoverImage(
+            token,
+            coverImageBytes,
+            filename: coverImageFilename ?? 'cover.jpg',
+            contentType: coverImageContentType ?? 'application/octet-stream',
+          );
+    final resolvedCoverUrl = await api.updateBookPage(
       token,
       current.id,
       title: title,
       isbn: isbn,
       pages: pages,
       publishedDate: publishedDate,
-      coverUrl: coverUrl,
+      coverUrl: coverFileUploadId == null ? coverUrl : null,
+      coverFileUploadId: coverFileUploadId,
+      coverFilename: coverImageFilename,
       authorPageIds: authorIds,
       genrePageIds: genreIds,
     );
@@ -196,7 +219,7 @@ class BooksRepository {
       isbn: isbn ?? current.isbn,
       pages: pages ?? current.pages,
       publishedDate: publishedDate ?? current.publishedDate,
-      coverUrl: coverUrl ?? current.coverUrl,
+      coverUrl: coverFileUploadId != null ? (resolvedCoverUrl ?? current.coverUrl) : (coverUrl ?? current.coverUrl),
       dateAdded: current.dateAdded,
       apiCategories: current.apiCategories,
       genres: genreNames ?? current.genres,
@@ -204,6 +227,21 @@ class BooksRepository {
     );
     await cache.updateBook(updated);
     return updated;
+  }
+
+  /// Uploads [bytes] directly to Notion — no external hosting needed, the
+  /// same capability Notion's own UI already offers for a page cover.
+  /// Returns the resulting file_upload id, ready to attach via
+  /// [NotionApi.updateBookPage]'s `coverFileUploadId`.
+  Future<String> uploadCoverImage(
+    String token,
+    Uint8List bytes, {
+    required String filename,
+    required String contentType,
+  }) async {
+    final upload = await api.createFileUpload(token, filename: filename, contentType: contentType);
+    await api.sendFileUpload(token, upload.uploadUrl, bytes, filename: filename, contentType: contentType);
+    return upload.id;
   }
 
   /// Matches a scanned/looked-up candidate against the existing shelf, per
