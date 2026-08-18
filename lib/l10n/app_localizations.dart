@@ -548,6 +548,36 @@ abstract class AppLocalizations {
   /// **'Genres'**
   String get detailGenres;
 
+  /// No description provided for @detailDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete book'**
+  String get detailDelete;
+
+  /// No description provided for @detailDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this book?'**
+  String get detailDeleteConfirmTitle;
+
+  /// No description provided for @detailDeleteConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes \"{title}\" from your Notion shelf (moved to Notion\'s trash, not permanently erased). This can\'t be undone from the app.'**
+  String detailDeleteConfirmMessage(String title);
+
+  /// No description provided for @detailDeleting.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting…'**
+  String get detailDeleting;
+
+  /// No description provided for @detailDeleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete: {message}'**
+  String detailDeleteError(String message);
+
   /// No description provided for @authorChipHint.
   ///
   /// In en, this message translates to:

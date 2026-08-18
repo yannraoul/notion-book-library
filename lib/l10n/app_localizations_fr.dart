@@ -254,6 +254,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get detailGenres => 'Genres';
 
   @override
+  String get detailDelete => 'Supprimer le livre';
+
+  @override
+  String get detailDeleteConfirmTitle => 'Supprimer ce livre ?';
+
+  @override
+  String detailDeleteConfirmMessage(String title) {
+    return 'Ceci retire « $title » de votre étagère Notion (déplacé dans la corbeille Notion, pas effacé définitivement). Impossible à annuler depuis l\'application.';
+  }
+
+  @override
+  String get detailDeleting => 'Suppression…';
+
+  @override
+  String detailDeleteError(String message) {
+    return 'Échec de la suppression : $message';
+  }
+
+  @override
   String get authorChipHint => 'Ajouter un auteur';
 
   @override

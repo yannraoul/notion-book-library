@@ -229,6 +229,14 @@ class BooksRepository {
     return updated;
   }
 
+  /// Archives [book]'s `Books*` page in Notion (recoverable via Notion's
+  /// own trash — see [NotionApi.archiveBookPage]) and drops it from the
+  /// local cache so it disappears from the shelf immediately.
+  Future<void> deleteBook(String token, Book book) async {
+    await api.archiveBookPage(token, book.id);
+    await cache.deleteBook(book.id);
+  }
+
   /// Uploads [bytes] directly to Notion — no external hosting needed, the
   /// same capability Notion's own UI already offers for a page cover.
   /// Returns the resulting file_upload id, ready to attach via

@@ -253,6 +253,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailGenres => 'Genres';
 
   @override
+  String get detailDelete => 'Delete book';
+
+  @override
+  String get detailDeleteConfirmTitle => 'Delete this book?';
+
+  @override
+  String detailDeleteConfirmMessage(String title) {
+    return 'This removes \"$title\" from your Notion shelf (moved to Notion\'s trash, not permanently erased). This can\'t be undone from the app.';
+  }
+
+  @override
+  String get detailDeleting => 'Deleting…';
+
+  @override
+  String detailDeleteError(String message) {
+    return 'Couldn\'t delete: $message';
+  }
+
+  @override
   String get authorChipHint => 'Add an author';
 
   @override

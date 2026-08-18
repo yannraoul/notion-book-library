@@ -41,6 +41,12 @@ class BooksCache {
     await db.update('books', _row(book), where: 'id = ?', whereArgs: [book.id]);
   }
 
+  /// Removes a single cached row — book-detail's delete path.
+  Future<void> deleteBook(String id) async {
+    final db = await _appDb.database;
+    await db.delete('books', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<List<Book>> readBooks() async {
     final db = await _appDb.database;
     final rows = await db.query('books');

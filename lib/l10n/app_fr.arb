@@ -114,6 +114,17 @@
   "detailPages": "Pages",
   "detailPublished": "Publié",
   "detailGenres": "Genres",
+  "detailDelete": "Supprimer le livre",
+  "detailDeleteConfirmTitle": "Supprimer ce livre ?",
+  "detailDeleteConfirmMessage": "Ceci retire « {title} » de votre étagère Notion (déplacé dans la corbeille Notion, pas effacé définitivement). Impossible à annuler depuis l'application.",
+  "@detailDeleteConfirmMessage": {
+    "placeholders": {"title": {"type": "String"}}
+  },
+  "detailDeleting": "Suppression…",
+  "detailDeleteError": "Échec de la suppression : {message}",
+  "@detailDeleteError": {
+    "placeholders": {"message": {"type": "String"}}
+  },
 
   "authorChipHint": "Ajouter un auteur",
   "authorAddNew": "Ajouter « {name} » comme nouvel auteur",

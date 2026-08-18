@@ -227,6 +227,19 @@ class NotionApi {
     return props == null ? null : _firstFileUrl(props['Cover'] as Map<String, dynamic>?);
   }
 
+  /// Archives a `Books*` page — `PATCH /v1/pages/{id}` with `archived:
+  /// true`. Notion's API has no hard-delete; archiving is exactly what
+  /// Notion's own UI "Delete" does (moves to trash, recoverable there),
+  /// which is the right semantics for an app with no sandbox workspace.
+  Future<void> archiveBookPage(String token, String pageId) async {
+    final response = await _client.patch(
+      Uri.parse('$_baseUrl/pages/$pageId'),
+      headers: _headers(token),
+      body: jsonEncode({'archived': true}),
+    );
+    _throwIfError(response);
+  }
+
   /// Step 1 of Notion's direct file-upload flow (no external hosting
   /// needed) — `POST /v1/file_uploads`, single-part mode (files under
   /// 20MB, which every book cover is). Returns the new upload's id and the

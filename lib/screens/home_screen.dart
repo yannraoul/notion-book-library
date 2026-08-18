@@ -43,31 +43,53 @@ class HomeScreen extends ConsumerWidget {
           Expanded(
             child: connection is! NotionConnected
                 ? _NotConnectedState(tokens: tokens, l10n: l10n)
-                : booksAsync!.when(
-                    loading: () => Center(child: CircularProgressIndicator(color: tokens.accent)),
-                    error: (error, stackTrace) => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text(
-                          l10n.homeLoadError('$error'),
-                          textAlign: TextAlign.center,
-                          style: AppTypography.bodyMuted(tokens.muted),
-                        ),
+                : RefreshIndicator(
+                    color: tokens.accent,
+                    onRefresh: () => ref.refresh(booksProvider.future),
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: booksAsync!.when(
+                        loading: () => [
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(child: CircularProgressIndicator(color: tokens.accent)),
+                          ),
+                        ],
+                        error: (error, stackTrace) => [
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Text(
+                                l10n.homeLoadError('$error'),
+                                textAlign: TextAlign.center,
+                                style: AppTypography.bodyMuted(tokens.muted),
+                              ),
+                            ),
+                          ),
+                        ],
+                        data: (books) {
+                          if (books.isEmpty) {
+                            return [SliverFillRemaining(hasScrollBody: false, child: _EmptyState(tokens: tokens, l10n: l10n))];
+                          }
+                          final filtered = filterAndSortBooks(books, searchQuery: searchQuery, tab: tab, genreFilter: genreFilter);
+                          if (filtered.isEmpty) {
+                            return [
+                              SliverFillRemaining(
+                                hasScrollBody: false,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(32),
+                                    child: Text(l10n.shelfNoResults, style: AppTypography.bodyMuted(tokens.muted)),
+                                  ),
+                                ),
+                              ),
+                            ];
+                          }
+                          return [_BookGridSliver(tokens: tokens, books: filtered)];
+                        },
                       ),
                     ),
-                    data: (books) {
-                      if (books.isEmpty) return _EmptyState(tokens: tokens, l10n: l10n);
-                      final filtered = filterAndSortBooks(books, searchQuery: searchQuery, tab: tab, genreFilter: genreFilter);
-                      if (filtered.isEmpty) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Text(l10n.shelfNoResults, style: AppTypography.bodyMuted(tokens.muted)),
-                          ),
-                        );
-                      }
-                      return _BookGrid(tokens: tokens, books: filtered);
-                    },
                   ),
           ),
         ],
@@ -499,28 +521,32 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _BookGrid extends StatelessWidget {
+class _BookGridSliver extends StatelessWidget {
   final AppColorTokens tokens;
   final List<Book> books;
-  const _BookGrid({required this.tokens, required this.books});
+  const _BookGridSliver({required this.tokens, required this.books});
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
+    return SliverPadding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.screenHorizontalPadding,
         16,
         AppSpacing.screenHorizontalPadding,
         90,
       ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        childAspectRatio: 0.52,
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+          childAspectRatio: 0.52,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, i) => _BookTile(tokens: tokens, book: books[i]),
+          childCount: books.length,
+        ),
       ),
-      itemCount: books.length,
-      itemBuilder: (context, i) => _BookTile(tokens: tokens, book: books[i]),
     );
   }
 }

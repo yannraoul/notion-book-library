@@ -165,6 +165,45 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
     }
   }
 
+  Future<void> _delete() async {
+    final l10n = AppLocalizations.of(context)!;
+    final tokens = ref.read(colorTokensProvider(MediaQuery.platformBrightnessOf(context)));
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: tokens.surface,
+        title: Text(l10n.detailDeleteConfirmTitle, style: TextStyle(color: tokens.text)),
+        content: Text(l10n.detailDeleteConfirmMessage(_book.title), style: TextStyle(color: tokens.muted)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancel, style: TextStyle(color: tokens.text)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.detailDelete, style: TextStyle(color: tokens.alert, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final connection = ref.read(notionConnectionProvider);
+    if (connection is! NotionConnected) return;
+    setState(() => _saving = true);
+    try {
+      await BooksRepository(NotionApi()).deleteBook(connection.token, _book);
+      ref.invalidate(booksProvider);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.detailDeleteError('$e'))));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   Future<void> _pickPublishedDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -429,6 +468,16 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
                       ],
                     ),
                   ),
+                  if (_editing) ...[
+                    const SizedBox(height: 18),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: _saving ? null : _delete,
+                        icon: Icon(Icons.delete_outline, size: 18, color: tokens.alert),
+                        label: Text(l10n.detailDelete, style: TextStyle(color: tokens.alert, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

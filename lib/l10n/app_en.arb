@@ -114,6 +114,17 @@
   "detailPages": "Pages",
   "detailPublished": "Published",
   "detailGenres": "Genres",
+  "detailDelete": "Delete book",
+  "detailDeleteConfirmTitle": "Delete this book?",
+  "detailDeleteConfirmMessage": "This removes \"{title}\" from your Notion shelf (moved to Notion's trash, not permanently erased). This can't be undone from the app.",
+  "@detailDeleteConfirmMessage": {
+    "placeholders": {"title": {"type": "String"}}
+  },
+  "detailDeleting": "Deleting…",
+  "detailDeleteError": "Couldn't delete: {message}",
+  "@detailDeleteError": {
+    "placeholders": {"message": {"type": "String"}}
+  },
 
   "authorChipHint": "Add an author",
   "authorAddNew": "Add \"{name}\" as new",
