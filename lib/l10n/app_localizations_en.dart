@@ -372,7 +372,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeSarcelleRouille => 'Teal & rust';
-
-  @override
-  String get comingSoon => 'Not built yet';
 }

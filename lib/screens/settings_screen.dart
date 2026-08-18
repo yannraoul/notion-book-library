@@ -9,14 +9,15 @@ import '../services/notion_api.dart';
 import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
+import 'onboarding_screen.dart';
 
 // Connection status dot — a fixed universal green, not one of the theme's
 // accent/secondary tokens (those vary per selected theme and shouldn't be
 // relied on to read as "connected" regardless of which one is active).
 const _connectedDotColor = Color(0xFF34A853);
 
-/// Notion connection (NBLM-3) and Preferences — theme + language (NBLM-5)
-/// are real; About Shelf is still a future milestone.
+/// Notion connection (NBLM-3), Preferences — theme + language (NBLM-5),
+/// and About Shelf + onboarding replay (NBLM-11) are all real now.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -56,8 +57,25 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             const _ThemeSelector(),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-              child: Text(l10n.comingSoon, style: AppTypography.bodyMuted(tokens.muted)),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+              child: Text(l10n.settingsAbout.toUpperCase(), style: AppTypography.sectionLabel(tokens.muted)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.settingsAboutBody, style: AppTypography.bodyMuted(tokens.muted)),
+                  const SizedBox(height: 14),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const OnboardingScreen(standalone: false)),
+                    ),
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, alignment: Alignment.centerLeft),
+                    child: Text(l10n.settingsViewOnboarding, style: TextStyle(color: tokens.accent, fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

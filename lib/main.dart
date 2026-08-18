@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/locale_provider.dart';
 import 'providers/theme_provider.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/root_shell.dart';
 import 'services/settings_storage.dart';
 import 'theme/color_tokens.dart';
@@ -15,6 +16,7 @@ Future<void> main() async {
   final storage = SettingsStorage();
   final initialTheme = await readPersistedTheme(storage) ?? AppTheme.terracotta;
   final initialLanguage = await readPersistedLanguage(storage) ?? AppLanguage.fr;
+  final hasSeenOnboarding = await storage.read(hasSeenOnboardingKey) != null;
 
   runApp(
     ProviderScope(
@@ -22,13 +24,14 @@ Future<void> main() async {
         appThemeProvider.overrideWith(() => AppThemeNotifier(initialTheme, storage: storage)),
         appLanguageProvider.overrideWith(() => AppLanguageNotifier(initialLanguage, storage: storage)),
       ],
-      child: const MyApp(),
+      child: MyApp(showOnboarding: !hasSeenOnboarding),
     ),
   );
 }
 
 class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+  final bool showOnboarding;
+  const MyApp({super.key, required this.showOnboarding});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,7 +59,7 @@ class MyApp extends ConsumerWidget {
         scaffoldBackgroundColor: tokens.bg,
         fontFamily: Platform.isIOS ? '.SF Pro Text' : null,
       ),
-      home: const RootShell(),
+      home: showOnboarding ? const OnboardingScreen() : const RootShell(),
     );
   }
 }
