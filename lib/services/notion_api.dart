@@ -162,6 +162,39 @@ class NotionApi {
     }, icon: _bookIcon);
   }
 
+  /// Partial update of an existing `Books*` page — `PATCH /v1/pages/{id}`,
+  /// only the given (non-null) fields are sent. Signature permanently omits
+  /// `status`/`currentPage`/`dateStarted`/`dateFinished`/`rating` — not
+  /// just unused but structurally absent, so no caller can wire a
+  /// Habits-owned field through this method even by accident.
+  Future<void> updateBookPage(
+    String token,
+    String pageId, {
+    String? title,
+    String? isbn,
+    int? pages,
+    DateTime? publishedDate,
+    String? coverUrl,
+    List<String>? authorPageIds,
+    List<String>? genrePageIds,
+  }) async {
+    final properties = <String, dynamic>{
+      if (title != null) 'Name': _titleProperty(title),
+      if (isbn != null) 'ISBN': _richTextProperty(isbn),
+      if (pages != null) 'Pages': _numberProperty(pages),
+      if (publishedDate != null) 'Date published': _dateProperty(publishedDate),
+      if (coverUrl != null) 'Cover': _externalFileProperty(coverUrl),
+      if (authorPageIds != null) 'Authors': _relationProperty(authorPageIds),
+      if (genrePageIds != null) 'Genres': _relationProperty(genrePageIds),
+    };
+    final response = await _client.patch(
+      Uri.parse('$_baseUrl/pages/$pageId'),
+      headers: _headers(token),
+      body: jsonEncode({'properties': properties}),
+    );
+    _throwIfError(response);
+  }
+
   Map<String, dynamic> _titleProperty(String text) => {
         'title': [
           {

@@ -326,6 +326,12 @@ abstract class AppLocalizations {
   /// **'genre?'**
   String get statusNeedsGenre;
 
+  /// No description provided for @statusNeedsAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'author?'**
+  String get statusNeedsAuthor;
+
   /// No description provided for @ocrTitle.
   ///
   /// In en, this message translates to:
@@ -500,6 +506,12 @@ abstract class AppLocalizations {
   /// **'‹ Back'**
   String get detailBack;
 
+  /// No description provided for @detailEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get detailEdit;
+
   /// No description provided for @detailIsbn.
   ///
   /// In en, this message translates to:
@@ -523,6 +535,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Genres'**
   String get detailGenres;
+
+  /// No description provided for @authorChipHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an author'**
+  String get authorChipHint;
+
+  /// No description provided for @authorAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add \"{name}\" as new'**
+  String authorAddNew(String name);
+
+  /// No description provided for @authorConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm author'**
+  String get authorConfirmTitle;
+
+  /// No description provided for @authorConfirmKeepNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep \"{name}\" as new author'**
+  String authorConfirmKeepNew(String name);
 
   /// No description provided for @readingStatusLabel.
   ///

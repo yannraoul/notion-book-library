@@ -8,6 +8,7 @@ import '../providers/theme_provider.dart';
 import '../services/notion_api.dart';
 import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
+import '../widgets/genre_chip.dart';
 
 /// Design screen 09 — genre confirm. Never auto-writes an unconfirmed
 /// genre (`docs/Backlog shelf.md`) — Confirm is the only way a genre
@@ -91,7 +92,7 @@ class _GenreConfirmScreenState extends ConsumerState<GenreConfirmScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: _liveGenres!
-                      .map((genre) => _GenreChip(
+                      .map((genre) => GenreChip(
                             tokens: tokens,
                             label: genre,
                             selected: _selected == genre,
@@ -157,35 +158,6 @@ class _GenreConfirmScreenState extends ConsumerState<GenreConfirmScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GenreChip extends StatelessWidget {
-  final AppColorTokens tokens;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _GenreChip({required this.tokens, required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? tokens.accentSoft : tokens.surface,
-          borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
-          border: Border.all(color: selected ? tokens.accent : tokens.border),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(color: selected ? tokens.accent : tokens.text, fontSize: 13, fontWeight: FontWeight.w600),
         ),
       ),
     );

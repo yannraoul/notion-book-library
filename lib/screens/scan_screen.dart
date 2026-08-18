@@ -7,6 +7,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../l10n/app_localizations.dart';
+import '../providers/authors_provider.dart';
 import '../providers/books_provider.dart';
 import '../providers/notion_connection_provider.dart';
 import '../providers/scan_queue_provider.dart';
@@ -130,10 +131,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     final connection = ref.read(notionConnectionProvider);
     if (connection is! NotionConnected) return;
     final existingBooks = ref.read(booksProvider).valueOrNull ?? [];
+    final existingAuthorNames = ref.read(authorNamesProvider).valueOrNull ?? {};
     ref.read(scanQueueProvider.notifier).addFromLookup(
           result,
           booksRepository: BooksRepository(NotionApi()),
           existingBooks: existingBooks,
+          existingAuthorNames: existingAuthorNames,
         );
     setState(() => _scannedCount++);
     _armHintTimer();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../providers/authors_provider.dart';
 import '../providers/books_provider.dart';
 import '../providers/notion_connection_provider.dart';
 import '../providers/scan_queue_provider.dart';
@@ -10,12 +11,14 @@ import '../repositories/books_repository.dart';
 import '../services/notion_api.dart';
 import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
+import 'author_confirm_screen.dart';
 import 'dedupe_screen.dart';
 import 'genre_confirm_screen.dart';
 
 /// Design screen 05 — review queue. Rows show a status badge; tapping a
 /// duplicate opens [DedupeScreen], tapping needs-genre opens
-/// [GenreConfirmScreen]. "Add ready now" commits every ready item via the
+/// [GenreConfirmScreen], tapping needs-author-confirm opens
+/// [AuthorConfirmScreen]. "Add ready now" commits every ready item via the
 /// NBLM-6 write path.
 class QueueScreen extends ConsumerStatefulWidget {
   const QueueScreen({super.key});
@@ -98,6 +101,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
           connection: connection,
         );
     ref.invalidate(booksProvider);
+    ref.invalidate(authorNamesProvider);
     if (!mounted) return;
     setState(() => _saving = false);
     final remaining = ref.read(scanQueueProvider);
@@ -120,19 +124,19 @@ class _QueueRow extends ConsumerWidget {
       QueueItemStatus.ready => (l10n.statusReady, tokens.accent),
       QueueItemStatus.duplicate => (l10n.statusDuplicate, tokens.alert),
       QueueItemStatus.needsGenre => (l10n.statusNeedsGenre, tokens.muted),
+      QueueItemStatus.needsAuthorConfirm => (l10n.statusNeedsAuthor, tokens.muted),
     };
 
     return InkWell(
       borderRadius: BorderRadius.circular(AppSpacing.settingsCardRadius),
-      onTap: item.status == QueueItemStatus.ready
-          ? null
-          : () {
-              if (item.status == QueueItemStatus.duplicate) {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => DedupeScreen(itemId: item.id)));
-              } else {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => GenreConfirmScreen(itemId: item.id)));
-              }
-            },
+      onTap: switch (item.status) {
+        QueueItemStatus.ready => null,
+        QueueItemStatus.duplicate => () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DedupeScreen(itemId: item.id))),
+        QueueItemStatus.needsGenre => () =>
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => GenreConfirmScreen(itemId: item.id))),
+        QueueItemStatus.needsAuthorConfirm => () =>
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => AuthorConfirmScreen(itemId: item.id))),
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.cardPaddingHorizontal, vertical: AppSpacing.cardPaddingVertical),
         decoration: BoxDecoration(

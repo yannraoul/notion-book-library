@@ -22,3 +22,4 @@ something is NBLM vs NBLB, etc).
 - [NBLM-9](features/NBLM-9.md) — Genre: live from Notion, create-or-link like authors
 - [NBLM-10](features/NBLM-10.md) — Home screen: real tabs, genre filter sheet, search
 - [NBLM-11](features/NBLM-11.md) — Onboarding carousel + About Shelf section
+- [NBLM-12](features/NBLM-12.md) — Book detail screen + author duplicate-prevention

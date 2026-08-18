@@ -155,6 +155,57 @@ class BooksRepository {
     return book;
   }
 
+  /// Updates Shelf-owned fields on an existing `Books*` row (book detail's
+  /// write path). Every field is optional — only non-null ones are sent to
+  /// Notion and merged into the returned/cached [Book], so a caller can
+  /// write any subset of fields in one call. [current.reading] is always
+  /// carried through untouched: this method has no parameter for it at
+  /// all, so there's no way for a caller to accidentally overwrite a
+  /// Habits-owned field through this path.
+  Future<Book> updateBook({
+    required String token,
+    required String authorsDbId,
+    required String genresDbId,
+    required Book current,
+    String? title,
+    String? isbn,
+    int? pages,
+    DateTime? publishedDate,
+    String? coverUrl,
+    List<String>? authorNames,
+    List<String>? genreNames,
+  }) async {
+    final authorIds = authorNames == null ? null : await resolveAuthorIds(token, authorsDbId, authorNames);
+    final genreIds = genreNames == null ? null : await resolveGenreIds(token, genresDbId, genreNames);
+    await api.updateBookPage(
+      token,
+      current.id,
+      title: title,
+      isbn: isbn,
+      pages: pages,
+      publishedDate: publishedDate,
+      coverUrl: coverUrl,
+      authorPageIds: authorIds,
+      genrePageIds: genreIds,
+    );
+    final updated = Book(
+      id: current.id,
+      title: title ?? current.title,
+      subtitle: current.subtitle,
+      authors: authorNames ?? current.authors,
+      isbn: isbn ?? current.isbn,
+      pages: pages ?? current.pages,
+      publishedDate: publishedDate ?? current.publishedDate,
+      coverUrl: coverUrl ?? current.coverUrl,
+      dateAdded: current.dateAdded,
+      apiCategories: current.apiCategories,
+      genres: genreNames ?? current.genres,
+      reading: current.reading,
+    );
+    await cache.updateBook(updated);
+    return updated;
+  }
+
   /// Matches a scanned/looked-up candidate against the existing shelf, per
   /// `docs/Backlog shelf.md`'s dedupe rule: ISBN exact match first: if
   /// that finds nothing (or the candidate has no ISBN), fuzzy fallback =

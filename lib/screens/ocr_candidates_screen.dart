@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../providers/authors_provider.dart';
 import '../providers/books_provider.dart';
 import '../providers/notion_connection_provider.dart';
 import '../providers/scan_queue_provider.dart';
@@ -10,6 +11,7 @@ import '../repositories/books_repository.dart';
 import '../services/book_lookup_service.dart';
 import '../services/notion_api.dart';
 import '../theme/spacing.dart';
+import '../widgets/confidence_pill.dart';
 import 'manual_search_screen.dart';
 import 'queue_screen.dart';
 
@@ -40,10 +42,12 @@ class _OcrCandidatesScreenState extends ConsumerState<OcrCandidatesScreen> {
     final connection = ref.read(notionConnectionProvider);
     if (connection is! NotionConnected) return;
     final existingBooks = ref.read(booksProvider).valueOrNull ?? [];
+    final existingAuthorNames = ref.read(authorNamesProvider).valueOrNull ?? {};
     ref.read(scanQueueProvider.notifier).addFromLookup(
           result,
           booksRepository: BooksRepository(NotionApi()),
           existingBooks: existingBooks,
+          existingAuthorNames: existingAuthorNames,
         );
     if (!mounted) return;
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const QueueScreen()));
@@ -119,7 +123,6 @@ class _OcrCandidatesScreenState extends ConsumerState<OcrCandidatesScreen> {
                       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.listGap),
                       itemBuilder: (context, i) {
                         final result = _results![i];
-                        final confidence = result.confidence == null ? null : '${(result.confidence! * 100).round()}%';
                         return InkWell(
                           onTap: () => _select(result),
                           borderRadius: BorderRadius.circular(AppSpacing.settingsCardRadius),
@@ -145,12 +148,7 @@ class _OcrCandidatesScreenState extends ConsumerState<OcrCandidatesScreen> {
                                     ],
                                   ),
                                 ),
-                                if (confidence != null)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(color: tokens.accentSoft, borderRadius: BorderRadius.circular(AppSpacing.pillRadius)),
-                                    child: Text(confidence, style: TextStyle(color: tokens.accent, fontSize: 11.5, fontWeight: FontWeight.w700)),
-                                  ),
+                                if (result.confidence != null) ConfidencePill(tokens: tokens, value: result.confidence!),
                               ],
                             ),
                           ),

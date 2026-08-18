@@ -9,6 +9,8 @@ import '../repositories/books_repository.dart';
 import '../services/notion_api.dart';
 import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
+import '../widgets/author_chip_input.dart';
+import '../widgets/genre_chip.dart';
 
 /// Manual book entry (design screen 10) — the scan pipeline's last-resort
 /// identification method, and the first screen to exercise the write path
@@ -27,8 +29,8 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
   final _isbnController = TextEditingController();
   final _pagesController = TextEditingController();
   final _coverUrlController = TextEditingController();
-  final _authorsController = TextEditingController();
 
+  List<String> _authors = [];
   DateTime? _publishedDate;
   final Set<String> _selectedGenres = {};
   bool _saving = false;
@@ -40,7 +42,6 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
     _isbnController.dispose();
     _pagesController.dispose();
     _coverUrlController.dispose();
-    _authorsController.dispose();
     super.dispose();
   }
 
@@ -55,7 +56,6 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
       return;
     }
     setState(() => _saving = true);
-    final authorNames = _authorsController.text.split(',').map((a) => a.trim()).where((a) => a.isNotEmpty).toList();
     try {
       await BooksRepository(NotionApi()).createBook(
         token: connection.token,
@@ -68,7 +68,7 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
         pages: int.tryParse(_pagesController.text.trim()),
         publishedDate: _publishedDate,
         coverUrl: _coverUrlController.text.trim().isEmpty ? null : _coverUrlController.text.trim(),
-        authorNames: authorNames,
+        authorNames: _authors,
         genreNames: _selectedGenres.toList(),
       );
       ref.invalidate(booksProvider);
@@ -165,7 +165,9 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          _Field(tokens: tokens, label: l10n.fieldAuthors, controller: _authorsController),
+          Text(l10n.fieldAuthors, style: TextStyle(color: tokens.muted, fontSize: 12.5, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          AuthorChipInput(authors: _authors, onChanged: (next) => setState(() => _authors = next)),
           const SizedBox(height: 14),
           Text(l10n.fieldGenres, style: TextStyle(color: tokens.muted, fontSize: 12.5, fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
@@ -173,7 +175,7 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
             spacing: 8,
             runSpacing: 8,
             children: genreHues.keys
-                .map((genre) => _GenreChip(
+                .map((genre) => GenreChip(
                       tokens: tokens,
                       label: genre,
                       selected: _selectedGenres.contains(genre),
@@ -311,35 +313,3 @@ class _DateField extends StatelessWidget {
   }
 }
 
-class _GenreChip extends StatelessWidget {
-  final AppColorTokens tokens;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _GenreChip({required this.tokens, required this.label, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? tokens.accentSoft : tokens.surface,
-          borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
-          border: Border.all(color: selected ? tokens.accent : tokens.border),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? tokens.accent : tokens.text,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}

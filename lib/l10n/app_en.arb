@@ -69,6 +69,7 @@
   "statusReady": "ready",
   "statusDuplicate": "duplicate",
   "statusNeedsGenre": "genre?",
+  "statusNeedsAuthor": "author?",
 
   "ocrTitle": "Which book did you scan?",
   "ocrReadLabel": "Text read from the cover:",
@@ -106,10 +107,22 @@
   },
 
   "detailBack": "‹ Back",
+  "detailEdit": "Edit",
   "detailIsbn": "ISBN",
   "detailPages": "Pages",
   "detailPublished": "Published",
   "detailGenres": "Genres",
+
+  "authorChipHint": "Add an author",
+  "authorAddNew": "Add \"{name}\" as new",
+  "@authorAddNew": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "authorConfirmTitle": "Confirm author",
+  "authorConfirmKeepNew": "Keep \"{name}\" as new author",
+  "@authorConfirmKeepNew": {
+    "placeholders": {"name": {"type": "String"}}
+  },
 
   "readingStatusLabel": "Reading status (read-only)",
   "readingOwnedNote": "Owned by Habits — Shelf never edits these",

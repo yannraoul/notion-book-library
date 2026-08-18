@@ -33,6 +33,14 @@ class BooksCache {
     await db.insert('books', _row(book));
   }
 
+  /// Updates a single cached row in place, for book-detail edits — unlike
+  /// [insertBook], whose `db.insert` would throw on this row's existing
+  /// primary key.
+  Future<void> updateBook(Book book) async {
+    final db = await _appDb.database;
+    await db.update('books', _row(book), where: 'id = ?', whereArgs: [book.id]);
+  }
+
   Future<List<Book>> readBooks() async {
     final db = await _appDb.database;
     final rows = await db.query('books');

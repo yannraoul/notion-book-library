@@ -140,6 +140,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusNeedsGenre => 'genre?';
 
   @override
+  String get statusNeedsAuthor => 'author?';
+
+  @override
   String get ocrTitle => 'Which book did you scan?';
 
   @override
@@ -229,6 +232,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailBack => '‹ Back';
 
   @override
+  String get detailEdit => 'Edit';
+
+  @override
   String get detailIsbn => 'ISBN';
 
   @override
@@ -239,6 +245,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get detailGenres => 'Genres';
+
+  @override
+  String get authorChipHint => 'Add an author';
+
+  @override
+  String authorAddNew(String name) {
+    return 'Add \"$name\" as new';
+  }
+
+  @override
+  String get authorConfirmTitle => 'Confirm author';
+
+  @override
+  String authorConfirmKeepNew(String name) {
+    return 'Keep \"$name\" as new author';
+  }
 
   @override
   String get readingStatusLabel => 'Reading status (read-only)';

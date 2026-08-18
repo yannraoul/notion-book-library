@@ -69,6 +69,7 @@
   "statusReady": "prêt",
   "statusDuplicate": "doublon",
   "statusNeedsGenre": "genre ?",
+  "statusNeedsAuthor": "auteur ?",
 
   "ocrTitle": "Quel livre avez-vous scanné ?",
   "ocrReadLabel": "Texte lu sur la couverture :",
@@ -106,10 +107,22 @@
   },
 
   "detailBack": "‹ Retour",
+  "detailEdit": "Modifier",
   "detailIsbn": "ISBN",
   "detailPages": "Pages",
   "detailPublished": "Publié",
   "detailGenres": "Genres",
+
+  "authorChipHint": "Ajouter un auteur",
+  "authorAddNew": "Ajouter « {name} » comme nouvel auteur",
+  "@authorAddNew": {
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "authorConfirmTitle": "Confirmer l’auteur",
+  "authorConfirmKeepNew": "Garder « {name} » comme nouvel auteur",
+  "@authorConfirmKeepNew": {
+    "placeholders": {"name": {"type": "String"}}
+  },
 
   "readingStatusLabel": "Statut de lecture (lecture seule)",
   "readingOwnedNote": "Géré par Habits — jamais modifié ici",
