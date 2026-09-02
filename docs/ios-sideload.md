@@ -77,22 +77,39 @@ Repeat step 11 with the Habits IPA.
 
 ---
 
-## Ongoing — the automatic part
+## Ongoing — keeping the 7-day cert alive
 
-- With **LocalDevVPN connected** and the phone on Wi-Fi, SideStore
-  re-signs Shelf in the background before the 7 days elapse. The PC is not
-  involved.
-- iOS does not *guarantee* background execution. Backstop habit: **open
-  SideStore every few days** (on Wi-Fi) and tap refresh on the My Apps
-  tab — a few seconds.
-- If the app *does* expire (LocalDevVPN was off, or no Wi-Fi for >7 days)
-  it simply won't launch until the next refresh. The local `sqflite`
-  cache is untouched — no data loss, and Notion is the source of truth
-  anyway.
-- **Refresh needs Wi-Fi** — cellular won't trigger it.
-- After a **major iOS update** the device pairing can break; re-run
-  iloader (or re-import the pairing file per the SideStore pairing-file
-  guide).
+**The PC is no longer involved.** Cable + iloader are only for the initial
+install and for replacing the pairing file when it breaks (see below).
+Sideloadly is fully replaced.
+
+**Every refresh needs:**
+- **LocalDevVPN connected** — the on-device loopback tunnel SideStore
+  writes the re-signed app through. Leave it connected permanently (no
+  battery/data cost). Refresh fails without it.
+- Internet + the **anisette server** reachable (contacted on every
+  refresh) + the stored pairing file still valid.
+
+**Wi-Fi vs cellular / PC on-or-off** depends on the anisette server
+(SideStore → Settings → Anisette Server):
+- **Public server** (the list, or a hosted URL): PC can be off; any
+  internet works, though Wi-Fi is the tested path. Not tied to the home
+  network.
+- **Self-hosted on the PC**: PC must be on and the phone on the same
+  Wi-Fi (it reaches the server at the PC's LAN address).
+
+**Routine:** every 4–5 days open SideStore → **My Apps** → tap refresh
+(~10 s). SideStore also attempts background refresh, but iOS throttles
+background tasks hard — the manual habit is what actually keeps the clock
+from running out.
+
+**If the app expires** (VPN was off, or no refresh for >7 days) it just
+won't launch until the next refresh. The `sqflite` cache is untouched —
+no data loss, and Notion is the source of truth anyway.
+
+**After a major iOS update** the pairing file can break ("could not
+determine this device's UDID"). Fix per the troubleshooting section — it's
+the only time the PC comes back into it.
 
 ## When shipping a code change
 
