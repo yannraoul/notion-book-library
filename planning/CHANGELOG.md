@@ -24,3 +24,4 @@ is just the index.
 - [NBLB-8](bugs/NBLB-8.md) — barcode-mode tuning: scanWindow, EAN-13-only formats, torch toggle
 - [NBLB-9](bugs/NBLB-9.md) — cover-photo capture regressed to always failing (regression from NBLB-8)
 - [NBLB-10](bugs/NBLB-10.md) — cover capture still hangs then fails; added direct search as a fallback entry point
+- [NBLB-11](bugs/NBLB-11.md) — SideStore install failed: `CFBundleName` underscores rejected as Apple App ID name

@@ -144,6 +144,14 @@ Unchanged from the normal flow:
   be **`10.7.0.1`**; confirm you're on the current stable channel (re-run
   iloader → Install SideStore); restart phone + PC and repeat.
 
+**"Failed to add developer app ID" / "invalid value ... for the parameter
+'appIdName'" (developer error 35)**
+- Apple's App ID name only allows letters, digits, and spaces. iloader
+  derives it from the IPA's `CFBundleName`, so any underscore or symbol
+  there fails. Fix it in `ios/Runner/Info.plist` (`CFBundleName` →
+  letters/spaces only, e.g. `Shelf`), rebuild on Codemagic, reinstall.
+  See NBLB-11.
+
 **"Maximum number of apps" reached**
 - Free accounts allow 3 sideloaded apps (SideStore + Shelf + Habits =
   exactly 3). Remove anything else sideloaded.
