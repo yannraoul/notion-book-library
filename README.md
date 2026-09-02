@@ -109,12 +109,14 @@ Repo root also holds:
   (**NBLB-y**, write-ups in `bugs/`), `BACKLOG.md` holds ideas not yet
   scoped into work.
 - **`design/`** — the finalized design handoff (read-only reference).
-- **`docs/`** — the product/pipeline spec (`Backlog shelf.md`).
+- **`docs/`** — the product/pipeline spec (`Backlog shelf.md`) and the
+  iOS sideload / 7-day auto-refresh workflow (`ios-sideload.md`).
 - **`instructions.md`** — the contributor rulebook: planning-doc
   conventions, commit/push policy, versioning, i18n, theming, responsive
   design, folder structure.
 - **`codemagic.yaml`** — CI config for unsigned iOS builds (no Mac is
-  available locally; sideload via the unsigned IPA artifact).
+  available locally; sideload via the unsigned IPA artifact — see
+  `docs/ios-sideload.md`).
 
 ## Getting started
 

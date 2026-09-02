@@ -1,6 +1,8 @@
+# Unsigned iOS build for sideloading. Install + keep the 7-day cert
+# refreshed with SideStore — see docs/ios-sideload.md.
 workflows:
   ios-unsigned:
-    name: iOS unsigned (Sideloadly)
+    name: iOS unsigned (SideStore)
     environment:
       flutter: stable
     scripts:
