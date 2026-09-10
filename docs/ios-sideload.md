@@ -69,9 +69,22 @@ The iPhone needs iOS 15+ **with a passcode set**.
 
 10. Get `Shelf.ipa` from the Codemagic `ios-unsigned` workflow artifact.
     SideStore re-signs it on install, so the unsigned IPA is fine.
-11. Transfer the IPA to the phone (AirDrop / Files / iCloud Drive), then
-    SideStore → **My Apps → "+"** → select the `.ipa`. It re-signs with
-    the 7-day cert and installs.
+11. Transfer the IPA to the phone, then SideStore → **My Apps → "+"** →
+    **Browse** → select the `.ipa`. It re-signs with the 7-day cert and
+    installs into the **Active** list.
+
+    **Install through the SideStore app, never through iloader directly.**
+    iloader can push an IPA onto the phone, but SideStore only refreshes
+    apps *it* installed — see the "shows under View App IDs but not Active"
+    entry below.
+
+    **Getting the IPA into the "+" picker:** it must be a file the iOS
+    **Files** app can see. Most reliable transfer is **USB file sharing**
+    (Apple Devices app / iTunes → phone → File Sharing → **SideStore** →
+    drop the `.ipa` in; on the phone it appears under *Browse → On My
+    iPhone → SideStore*). iCloud Drive's **web** uploader and Safari
+    downloads of the Codemagic artifact both frequently fail — see the
+    troubleshooting entry.
 
 Repeat step 11 with the Habits IPA.
 
@@ -115,9 +128,20 @@ the only time the PC comes back into it.
 
 Unchanged from the normal flow:
 
-1. Push → Codemagic `ios-unsigned` → download the new `Shelf.ipa`.
-2. SideStore → **My Apps → "+"** → select the new IPA. Installs over the
-   top, keeps app data. The refresh cycle continues from there.
+1. Push → Codemagic `ios-unsigned` → download the new `Shelf.ipa` on the
+   PC.
+2. Transfer it to the phone — **USB file sharing into the SideStore app**
+   is the reliable path (Apple Devices app / iTunes → File Sharing →
+   SideStore). See troubleshooting for why iCloud web / Safari download
+   don't.
+3. SideStore → **My Apps → "+" → Browse** → select the new IPA. Installs
+   over the top, keeps app data. The refresh cycle continues from there.
+
+**Code updates are always manual** (transfer IPA → "+" → select);
+SideStore has no link to Codemagic. The **7-day cert refresh is separate**
+and needs none of this — it re-signs the already-installed app on-device
+(SideStore → My Apps → tap refresh), no PC, no IPA, no cable. Only a new
+*build* needs the transfer dance.
 
 ---
 
@@ -172,6 +196,37 @@ Unchanged from the normal flow:
 **"Maximum number of apps" reached**
 - Free accounts allow 3 sideloaded apps (SideStore + Shelf + Habits =
   exactly 3). Remove anything else sideloaded.
+
+**App shows under "View App IDs" but not in "My Apps → Active" / can't
+refresh it**
+- The app was installed by **iloader directly**, not through the SideStore
+  phone app. SideStore only refreshes apps *it* installed — those are the
+  ones in the Active list. App IDs, by contrast, are registered on the
+  Apple Developer account by *any* sideload tool, so they all show under
+  "View App IDs" with their validity, but with no refresh action attached.
+- Fix: on the phone, delete the iloader-installed copy, then reinstall via
+  SideStore → **My Apps → "+" → Browse → the `.ipa`**. It reappears in
+  Active with a tappable "7 DAYS" counter. Local `sqflite` cache is lost
+  (Notion is the source of truth, so no real data loss).
+
+**Can't get the IPA into the "+" picker — Files shows nothing, iCloud
+upload fails, or Codemagic "installs" instead of downloading**
+- The "+" picker is just the iOS **Files** app; it can only offer an IPA
+  that's actually saved on the phone, and only under **Browse** (not
+  *Recents*, which lists only files you've opened before).
+- **iCloud Drive via icloud.com (web):** the browser uploader frequently
+  rejects/hangs on `.ipa`. Use the **iCloud for Windows** desktop folder
+  instead, or skip iCloud.
+- **Safari download from Codemagic:** iOS recognises the `.ipa` and tries
+  to install it rather than save it. Press-and-hold the artifact link →
+  **Download Linked File** (only works if it's a real link, not a JS
+  button).
+- **Reliable path — USB file sharing:** Apple Devices app (or iTunes) →
+  phone → **File Sharing** → **SideStore** → drag `Shelf.ipa` /
+  `Habits.ipa` in → Sync/Apply. On the phone they're at *Browse → On My
+  iPhone → SideStore*. This is the tested method.
+- **No-cable alternative:** upload to Google Drive on the PC → Drive app on
+  the phone → open file → **Save to Files** → *On My iPhone*.
 
 ---
 
