@@ -225,9 +225,15 @@ class ScanQueueNotifier extends Notifier<List<QueueItem>> {
   }
 
   /// Saves every [QueueItemStatus.ready] item via the NBLM-6 write path,
-  /// removing each from the queue as it's committed. Returns the number
-  /// saved.
-  Future<int> commitReady({required BooksRepository booksRepository, required NotionConnected connection}) async {
+  /// removing each from the queue as it's committed. [asWishlist] applies
+  /// uniformly to the whole batch (NBLM-14's queue-review toggle is
+  /// deliberately batch-level, not per-item) — `false` (the default)
+  /// reproduces pre-NBLM-14 behavior exactly. Returns the number saved.
+  Future<int> commitReady({
+    required BooksRepository booksRepository,
+    required NotionConnected connection,
+    bool asWishlist = false,
+  }) async {
     final ready = state.where((item) => item.status == QueueItemStatus.ready).toList();
     var saved = 0;
     for (final item in ready) {
@@ -245,6 +251,7 @@ class ScanQueueNotifier extends Notifier<List<QueueItem>> {
         apiCategories: item.apiCategories,
         authorNames: item.authors,
         genreNames: item.confirmedGenre == null ? const [] : [item.confirmedGenre!],
+        initialStatus: asWishlist ? BookStatus.wishlist : null,
       );
       remove(item.id);
       saved++;
@@ -256,3 +263,8 @@ class ScanQueueNotifier extends Notifier<List<QueueItem>> {
 }
 
 final scanQueueProvider = NotifierProvider<ScanQueueNotifier, List<QueueItem>>(ScanQueueNotifier.new);
+
+/// NBLM-14's queue-review "Adding as: To read / Wishlist" toggle — batch
+/// level, not per-item (see [ScanQueueNotifier.commitReady]). Defaults to
+/// `false` ("To read") so the default add-book flow needs zero extra taps.
+final wishlistModeProvider = StateProvider<bool>((ref) => false);

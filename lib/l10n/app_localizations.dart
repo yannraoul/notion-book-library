@@ -308,6 +308,18 @@ abstract class AppLocalizations {
   /// **'Add {count} ready now'**
   String addReadyNow(int count);
 
+  /// No description provided for @queueModeToRead.
+  ///
+  /// In en, this message translates to:
+  /// **'To read'**
+  String get queueModeToRead;
+
+  /// No description provided for @queueModeWishlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Wishlist'**
+  String get queueModeWishlist;
+
   /// No description provided for @statusReady.
   ///
   /// In en, this message translates to:
@@ -500,6 +512,12 @@ abstract class AppLocalizations {
   /// **'Save book'**
   String get saveBook;
 
+  /// No description provided for @saveToWishlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to wishlist'**
+  String get saveToWishlist;
+
   /// No description provided for @manualEntrySaving.
   ///
   /// In en, this message translates to:
@@ -637,6 +655,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'—'**
   String get pageDash;
+
+  /// No description provided for @markAsBought.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as bought'**
+  String get markAsBought;
 
   /// No description provided for @onboardingSkip.
   ///

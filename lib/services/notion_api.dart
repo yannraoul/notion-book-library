@@ -9,9 +9,14 @@ import '../models/book.dart';
 /// Thin wrapper over the Notion REST API. Covers the connection check
 /// (NBLM-3), reading the `Books*`/`Authors*`/`Genres*` databases (NBLM-4),
 /// and writing new `Books*`/`Authors*` pages (NBLM-6). Never writes
-/// `Status`/`Current page`/`Date started`/`Date finished`/`Rating` on
-/// `Books*` — that stays Habits' job forever — and never creates a new
-/// `Genres*` row, since that list is fixed/closed.
+/// `Current page`/`Date started`/`Date finished`/`Rating` on `Books*` —
+/// that stays Habits' job forever — and never creates a new `Genres*` row,
+/// since that list is fixed/closed. `Status` is the same "Habits' job"
+/// rule with two narrow, explicit exceptions (NBLM-14): [createBookPage]'s
+/// optional `initialStatus` (only ever `wishlist`, never any other value),
+/// and [markBookAsAcquired] (only ever `wishlist` -> `toRead`). Every other
+/// write path, including [updateBookPage], remains structurally unable to
+/// touch `Status`.
 class NotionApi {
   static const _baseUrl = 'https://api.notion.com/v1';
   // Pinned so response shapes don't shift under us without a deliberate bump.
@@ -145,7 +150,11 @@ class NotionApi {
 
   /// Creates a new `Books*` row. Only ever writes the fields Shelf owns
   /// (see the class doc comment) — [authorPageIds]/[genrePageIds] must
-  /// already be resolved relation ids, not names.
+  /// already be resolved relation ids, not names. [initialStatus] is the
+  /// one exception: omitted (`null`, the default), the create payload is
+  /// identical to before NBLM-14 (no `Status` key at all); passed, it must
+  /// be [BookStatus.wishlist] — this is the only status write allowed at
+  /// creation time.
   Future<String> createBookPage(
     String token, {
     required String booksDbId,
@@ -158,6 +167,7 @@ class NotionApi {
     String? apiCategories,
     List<String> authorPageIds = const [],
     List<String> genrePageIds = const [],
+    BookStatus? initialStatus,
   }) {
     return createPage(token, booksDbId, {
       'Name': _titleProperty(title),
@@ -169,6 +179,7 @@ class NotionApi {
       'API categories/subjects': _richTextProperty(apiCategories),
       'Authors': _relationProperty(authorPageIds),
       'Genres': _relationProperty(genrePageIds),
+      if (initialStatus != null) 'Status': _statusProperty(initialStatus),
     }, icon: _bookIcon);
   }
 
@@ -225,6 +236,26 @@ class NotionApi {
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final props = body['properties'] as Map<String, dynamic>?;
     return props == null ? null : _firstFileUrl(props['Cover'] as Map<String, dynamic>?);
+  }
+
+  /// NBLM-14's second and last Status-write exception (see the class doc
+  /// comment): flips a `Books*` page's `Status` from `Wishlist` to `To
+  /// read` — the "mark as bought" action on the book detail screen. Always
+  /// writes exactly `To read`; the caller (`BooksRepository`) is
+  /// responsible for only invoking this when the current status is
+  /// actually `Wishlist`, since Notion's API doesn't let us assert that
+  /// server-side in one call. Deliberately a separate method rather than a
+  /// parameter on [updateBookPage], so that method's signature stays
+  /// structurally incapable of writing `Status` for any other reason.
+  Future<void> markBookAsAcquired(String token, String pageId) async {
+    final response = await _client.patch(
+      Uri.parse('$_baseUrl/pages/$pageId'),
+      headers: _headers(token),
+      body: jsonEncode({
+        'properties': {'Status': _statusProperty(BookStatus.toRead)},
+      }),
+    );
+    _throwIfError(response);
   }
 
   /// Archives a `Books*` page — `PATCH /v1/pages/{id}` with `archived:
@@ -308,6 +339,12 @@ class NotionApi {
             ? null
             : {'start': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'},
       };
+
+  /// Notion's `status`-type property shape — distinct from `select`'s
+  /// (`{"select": {"name": ...}}`). Confirmed live against Yann's `Books*`
+  /// schema which uses the dedicated `status` type (see [_parseBook]'s
+  /// read side, already reading `props['Status']?['status']?['name']`).
+  Map<String, dynamic> _statusProperty(BookStatus status) => {'status': {'name': status.notionName}};
 
   Map<String, dynamic> _relationProperty(List<String> pageIds) => {
         'relation': pageIds.map((id) => {'id': id}).toList(),

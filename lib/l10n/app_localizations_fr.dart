@@ -132,6 +132,12 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get queueModeToRead => 'À lire';
+
+  @override
+  String get queueModeWishlist => 'Liste d’envie';
+
+  @override
   String get statusReady => 'prêt';
 
   @override
@@ -228,6 +234,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get saveBook => 'Enregistrer';
 
   @override
+  String get saveToWishlist => 'Enregistrer dans la liste d’envie';
+
+  @override
   String get manualEntrySaving => 'Enregistrement…';
 
   @override
@@ -305,6 +314,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pageDash => '—';
+
+  @override
+  String get markAsBought => 'Marquer comme acheté';
 
   @override
   String get onboardingSkip => 'Passer';

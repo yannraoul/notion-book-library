@@ -19,7 +19,8 @@ import 'genre_confirm_screen.dart';
 /// duplicate opens [DedupeScreen], tapping needs-genre opens
 /// [GenreConfirmScreen], tapping needs-author-confirm opens
 /// [AuthorConfirmScreen]. "Add ready now" commits every ready item via the
-/// NBLM-6 write path.
+/// NBLM-6 write path. The "Adding as: To read / Wishlist" toggle above the
+/// list (NBLM-14) applies to the whole batch, defaults to "To read".
 class QueueScreen extends ConsumerStatefulWidget {
   const QueueScreen({super.key});
 
@@ -31,10 +32,20 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Batch-level toggle always starts at "To read" for a fresh queue
+    // session, regardless of what a previous session left it at — the
+    // default add-book flow must never silently inherit "Wishlist".
+    Future.microtask(() => ref.read(wishlistModeProvider.notifier).state = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final tokens = ref.watch(colorTokensProvider(MediaQuery.platformBrightnessOf(context)));
     final queue = ref.watch(scanQueueProvider);
+    final asWishlist = ref.watch(wishlistModeProvider);
     final readyCount = queue.where((item) => item.status == QueueItemStatus.ready).length;
 
     return Scaffold(
@@ -58,6 +69,16 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
+              child: _StatusModeToggle(
+                tokens: tokens,
+                l10n: l10n,
+                asWishlist: asWishlist,
+                onChanged: (value) => ref.read(wishlistModeProvider.notifier).state = value,
+              ),
+            ),
+            const SizedBox(height: 12),
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontalPadding),
@@ -99,6 +120,7 @@ class _QueueScreenState extends ConsumerState<QueueScreen> {
     await ref.read(scanQueueProvider.notifier).commitReady(
           booksRepository: BooksRepository(NotionApi()),
           connection: connection,
+          asWishlist: ref.read(wishlistModeProvider),
         );
     ref.invalidate(booksProvider);
     ref.invalidate(authorNamesProvider);
@@ -158,6 +180,58 @@ class _QueueRow extends ConsumerWidget {
             ),
             Text(label, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// NBLM-14's batch-level "Adding as: To read / Wishlist" toggle — same
+/// pill-segment structure as `scan_screen.dart`'s `_ModeToggle`, but
+/// token-driven (this screen already uses [AppColorTokens] throughout,
+/// unlike the fixed-dark camera screen). Defaults to "To read" (`false`);
+/// "Add ready now"'s behavior/position is otherwise unchanged — it just
+/// reads this toggle's value at commit time.
+class _StatusModeToggle extends StatelessWidget {
+  final AppColorTokens tokens;
+  final AppLocalizations l10n;
+  final bool asWishlist;
+  final ValueChanged<bool> onChanged;
+
+  const _StatusModeToggle({required this.tokens, required this.l10n, required this.asWishlist, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: tokens.track, borderRadius: BorderRadius.circular(AppSpacing.pillRadius)),
+      child: Row(
+        children: [
+          Expanded(child: _segment(l10n.queueModeToRead, false)),
+          Expanded(child: _segment(l10n.queueModeWishlist, true)),
+        ],
+      ),
+    );
+  }
+
+  Widget _segment(String label, bool value) {
+    final active = asWishlist == value;
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? tokens.accentSoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppSpacing.pillRadius - 4),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? tokens.accent : tokens.muted,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

@@ -65,6 +65,8 @@
   "@addReadyNow": {
     "placeholders": {"count": {"type": "int"}}
   },
+  "queueModeToRead": "À lire",
+  "queueModeWishlist": "Liste d’envie",
 
   "statusReady": "prêt",
   "statusDuplicate": "doublon",
@@ -102,6 +104,7 @@
   "coverUploadButton": "Importer une image…",
   "coverUrlOrHint": "ou collez une URL d’image",
   "saveBook": "Enregistrer",
+  "saveToWishlist": "Enregistrer dans la liste d’envie",
   "manualEntrySaving": "Enregistrement…",
   "manualEntryError": "Impossible d’enregistrer : {message}",
   "@manualEntryError": {
@@ -143,6 +146,7 @@
   "currentPageLabel": "Page",
   "statusNotStarted": "Pas commencé",
   "pageDash": "—",
+  "markAsBought": "Marquer comme acheté",
 
   "onboardingSkip": "Passer",
   "onboardingNext": "Suivant",

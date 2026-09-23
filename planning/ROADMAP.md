@@ -24,3 +24,4 @@ something is NBLM vs NBLB, etc).
 - [NBLM-11](features/NBLM-11.md) — Onboarding carousel + About Shelf section
 - [NBLM-12](features/NBLM-12.md) — Book detail screen + author duplicate-prevention
 - [NBLM-13](features/NBLM-13.md) — Pull-to-refresh on the shelf grid + delete book
+- [NBLM-14](features/NBLM-14.md) — Wishlist status on new-book creation + mark-as-bought transition

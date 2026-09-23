@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/book.dart';
 import '../providers/books_provider.dart';
 import '../providers/notion_connection_provider.dart';
 import '../providers/theme_provider.dart';
@@ -16,6 +17,8 @@ import '../widgets/genre_chip.dart';
 /// identification method, and the first screen to exercise the write path
 /// added in NBLM-6. Bypasses the queue/dedupe/genre-confirm flow entirely,
 /// same as the design spec: genres are picked directly here, not suggested.
+/// A secondary "Save to wishlist" button (NBLM-14) below the primary
+/// "Save book" button reuses [_save] with `asWishlist: true`.
 class ManualEntryScreen extends ConsumerStatefulWidget {
   const ManualEntryScreen({super.key});
 
@@ -47,7 +50,7 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
 
   bool get _canSave => _titleController.text.trim().isNotEmpty && !_saving;
 
-  Future<void> _save(AppLocalizations l10n) async {
+  Future<void> _save(AppLocalizations l10n, {bool asWishlist = false}) async {
     final connection = ref.read(notionConnectionProvider);
     if (connection is! NotionConnected ||
         connection.booksDatabaseId == null ||
@@ -70,6 +73,7 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
         coverUrl: _coverUrlController.text.trim().isEmpty ? null : _coverUrlController.text.trim(),
         authorNames: _authors,
         genreNames: _selectedGenres.toList(),
+        initialStatus: asWishlist ? BookStatus.wishlist : null,
       );
       ref.invalidate(booksProvider);
       if (mounted) Navigator.of(context).pop();
@@ -200,6 +204,17 @@ class _ManualEntryScreenState extends ConsumerState<ManualEntryScreen> {
               child: Text(
                 _saving ? l10n.manualEntrySaving : l10n.saveBook,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton.icon(
+              onPressed: _canSave ? () => _save(l10n, asWishlist: true) : null,
+              icon: Icon(Icons.bookmark_border, size: 18, color: _canSave ? tokens.muted : tokens.track),
+              label: Text(
+                _saving ? l10n.manualEntrySaving : l10n.saveToWishlist,
+                style: TextStyle(color: _canSave ? tokens.muted : tokens.track, fontWeight: FontWeight.w600),
               ),
             ),
           ),

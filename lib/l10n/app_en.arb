@@ -65,6 +65,8 @@
   "@addReadyNow": {
     "placeholders": {"count": {"type": "int"}}
   },
+  "queueModeToRead": "To read",
+  "queueModeWishlist": "Wishlist",
 
   "statusReady": "ready",
   "statusDuplicate": "duplicate",
@@ -102,6 +104,7 @@
   "coverUploadButton": "Upload image…",
   "coverUrlOrHint": "or paste an image URL",
   "saveBook": "Save book",
+  "saveToWishlist": "Save to wishlist",
   "manualEntrySaving": "Saving…",
   "manualEntryError": "Couldn't save: {message}",
   "@manualEntryError": {
@@ -143,6 +146,7 @@
   "currentPageLabel": "Page",
   "statusNotStarted": "Not started",
   "pageDash": "—",
+  "markAsBought": "Mark as bought",
 
   "onboardingSkip": "Skip",
   "onboardingNext": "Next",

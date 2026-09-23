@@ -10,8 +10,10 @@ String _normalize(String s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'),
 
 /// Translates between Notion's `Books*`/`Authors*`/`Genres*` databases and
 /// the app's own [Book] model, and orchestrates creating new `Books*` rows
-/// (NBLM-6). Never writes `Status`/`Current page`/`Date started`/`Date
-/// finished`/`Rating`, that's permanently Habits' job.
+/// (NBLM-6). Never writes `Current page`/`Date started`/`Date finished`/
+/// `Rating`, that's permanently Habits' job. `Status` has the same rule
+/// with two narrow exceptions (NBLM-14, see [NotionApi]'s doc comment):
+/// [createBook]'s `initialStatus` and [markBookAsAcquired].
 class BooksRepository {
   final NotionApi api;
   final BooksCache cache;
@@ -124,6 +126,7 @@ class BooksRepository {
     String? apiCategories,
     List<String> authorNames = const [],
     List<String> genreNames = const [],
+    BookStatus? initialStatus,
   }) async {
     final authorIds = await resolveAuthorIds(token, authorsDbId, authorNames);
     final genreIds = await resolveGenreIds(token, genresDbId, genreNames);
@@ -139,6 +142,7 @@ class BooksRepository {
       apiCategories: apiCategories,
       authorPageIds: authorIds,
       genrePageIds: genreIds,
+      initialStatus: initialStatus,
     );
     final book = Book(
       id: id,
@@ -152,9 +156,22 @@ class BooksRepository {
       dateAdded: DateTime.now(),
       apiCategories: apiCategories,
       genres: genreNames,
+      reading: initialStatus == null ? null : ReadingStatus(status: initialStatus),
     );
     await cache.insertBook(book);
     return book;
+  }
+
+  /// NBLM-14's "mark as bought" action — flips [book] from `Wishlist` to
+  /// `To read`. Only valid when [book] is currently a wishlist entry;
+  /// guarded here (not just by the UI) since this is the one place Shelf
+  /// is allowed to write an existing book's `Status` at all.
+  Future<Book> markBookAsAcquired(String token, Book book) async {
+    assert(book.reading?.status == BookStatus.wishlist, 'markBookAsAcquired called on a non-wishlist book');
+    await api.markBookAsAcquired(token, book.id);
+    final updated = book.copyWith(reading: const ReadingStatus(status: BookStatus.toRead));
+    await cache.updateBook(updated);
+    return updated;
   }
 
   /// Updates Shelf-owned fields on an existing `Books*` row (book detail's

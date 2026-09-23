@@ -25,7 +25,10 @@ import '../widgets/genre_chip.dart';
 /// to read-only, "Cancel" discards it. The reading-status card is never
 /// part of that draft and never editable in either mode: Shelf must never
 /// write `Status`/`Current page`/`Date started`/`Date finished`/`Rating`,
-/// that stays Habits' job forever (see `CLAUDE.md`).
+/// that stays Habits' job forever (see `CLAUDE.md`) — except NBLM-14's one
+/// narrow exception, a "Mark as bought" button shown only when `Status ==
+/// wishlist`, which writes exactly the `Wishlist` -> `To read` transition
+/// via `BooksRepository.markBookAsAcquired` and nothing else.
 class BookDetailScreen extends ConsumerStatefulWidget {
   final Book book;
   const BookDetailScreen({super.key, required this.book});
@@ -198,6 +201,28 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.detailDeleteError('$e'))));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  /// NBLM-14's "mark as bought" action — the one existing-book status
+  /// transition Shelf is allowed to write (Wishlist -> To read only; see
+  /// `BooksRepository.markBookAsAcquired`'s doc comment). Only reachable
+  /// when [_book] is currently a wishlist entry.
+  Future<void> _markAsBought() async {
+    final connection = ref.read(notionConnectionProvider);
+    if (connection is! NotionConnected) return;
+    setState(() => _saving = true);
+    try {
+      final updated = await BooksRepository(NotionApi()).markBookAsAcquired(connection.token, _book);
+      ref.invalidate(booksProvider);
+      if (mounted) setState(() => _book = updated);
+    } catch (e) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.manualEntryError('$e'))));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -465,6 +490,22 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
                             ),
                           ],
                         ),
+                        if (_book.reading?.status == BookStatus.wishlist) ...[
+                          const SizedBox(height: AppSpacing.cardRowGap),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _saving ? null : _markAsBought,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: tokens.accent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius)),
+                              ),
+                              child: Text(l10n.markAsBought, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

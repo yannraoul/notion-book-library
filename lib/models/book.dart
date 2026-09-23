@@ -1,11 +1,15 @@
 /// Mirrors the `Books*` database's `Status` property (Notion's dedicated
-/// `status` type, not `select`). Fixed, Notion-enforced 4-value vocabulary.
-/// Shelf only ever reads this — never writes it, that stays Habits' job.
+/// `status` type, not `select`). Shelf reads this — never writes it, that
+/// stays Habits' job — except two narrow exceptions (NBLM-14): writing
+/// `wishlist` at creation time (a book found but not yet bought), and the
+/// single `wishlist` -> `toRead` transition (marking a wishlist book as
+/// bought). No other status or transition is ever written by Shelf.
 enum BookStatus {
   toRead('To read'),
   reading('Reading'),
   finished('Finished'),
-  stopped('Stopped');
+  stopped('Stopped'),
+  wishlist('Wishlist');
 
   final String notionName;
 
@@ -87,4 +91,19 @@ class Book {
   });
 
   String get primaryGenre => genres.isNotEmpty ? genres.first : '';
+
+  Book copyWith({ReadingStatus? reading}) => Book(
+        id: id,
+        title: title,
+        subtitle: subtitle,
+        authors: authors,
+        isbn: isbn,
+        pages: pages,
+        publishedDate: publishedDate,
+        coverUrl: coverUrl,
+        dateAdded: dateAdded,
+        apiCategories: apiCategories,
+        genres: genres,
+        reading: reading ?? this.reading,
+      );
 }
