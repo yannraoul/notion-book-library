@@ -441,14 +441,12 @@ class NotionApi {
     };
   }
 
-  /// `Rating`'s actual Notion type isn't confirmed (unlike `Status`, which
-  /// is confirmed to be the dedicated `status` type, not `select` — see
-  /// `BookStatus`'s doc comment) — the original assumption that it's a
-  /// `select` whose option name is a run of stars ("⭐⭐⭐") was never
-  /// device-verified and NBLB-13 found ratings still not showing after that
-  /// path was wired up to the UI, so this now reads whichever of `select`,
-  /// plain `number`, `formula`, or `rollup` the property actually is,
-  /// instead of assuming one shape.
+  /// Confirmed directly in Notion (NBLB-13): `Rating` is a `select` with 5
+  /// options, each option's name a run of 1-5 "★" (U+2605 BLACK STAR)
+  /// characters — not "⭐" (U+2B50) as originally assumed, which is the
+  /// actual reason ratings never showed up. `number`/`formula`/`rollup`
+  /// fallbacks are kept as defensive-only — cheap, and harmless if Habits
+  /// ever changes the property's shape.
   int? _parseRating(Map<String, dynamic>? ratingProperty) {
     if (ratingProperty == null) return null;
     final selectName = (ratingProperty['select'] as Map<String, dynamic>?)?['name'] as String?;
@@ -472,7 +470,8 @@ class NotionApi {
 
   int? _parseRatingText(String? text) {
     if (text == null) return null;
-    final stars = '⭐'.allMatches(text).length;
+    // ★ U+2605 (confirmed) and ⭐ U+2B50 (defensive) — count either.
+    final stars = text.runes.where((r) => r == 0x2605 || r == 0x2B50).length;
     if (stars > 0) return stars.clamp(1, 5);
     return int.tryParse(RegExp(r'\d').firstMatch(text)?.group(0) ?? '')?.clamp(1, 5);
   }

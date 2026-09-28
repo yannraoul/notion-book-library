@@ -27,3 +27,4 @@ is just the index.
 - [NBLB-11](bugs/NBLB-11.md) — SideStore install failed: `CFBundleName` underscores rejected as Apple App ID name
 - [NBLB-12](bugs/NBLB-12.md) — cover capture timeout root cause (iOS only emits frames on barcode hit); barcode scanWindow removed
 - [NBLB-13](bugs/NBLB-13.md) — NBLB-12/NBLM-15 didn't hold on device: barcode diagnostics added, cover UX double-camera fixed, rating parsing broadened
+- [NBLB-14](bugs/NBLB-14.md) — cover capture now a true in-app camera (not iOS's Camera app); rating star character fixed (★ not ⭐)
