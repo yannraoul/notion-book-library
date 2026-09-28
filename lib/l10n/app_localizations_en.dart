@@ -111,6 +111,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t read any text on that cover — try again or search manually.';
 
   @override
+  String get scanCoverPrompt =>
+      'Tap the shutter to open your camera and take a photo of the book\'s front cover.';
+
+  @override
+  String scanDebugInfo(int count, String info) {
+    return 'Detections: $count • last: $info';
+  }
+
+  @override
   String scannedCount(int count) {
     return '$count scanned';
   }

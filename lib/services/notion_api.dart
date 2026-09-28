@@ -411,7 +411,7 @@ class NotionApi {
       currentPage: (props['Current page']?['number'] as num?)?.toDouble(),
       dateStarted: dateStarted != null ? DateTime.parse(dateStarted) : null,
       dateFinished: dateFinished != null ? DateTime.parse(dateFinished) : null,
-      rating: _parseRating(_selectName(props['Rating'])),
+      rating: _parseRating(props['Rating']),
     );
   }
 
@@ -441,18 +441,40 @@ class NotionApi {
     };
   }
 
-  /// `Rating` is a select whose option name is a run of stars ("⭐⭐⭐") —
-  /// also accepts a plain "3"/"3/5" in case Habits ever changes format.
-  int? _parseRating(String? name) {
-    if (name == null) return null;
-    final stars = '⭐'.allMatches(name).length;
-    if (stars > 0) return stars.clamp(1, 5);
-    return int.tryParse(RegExp(r'\d').firstMatch(name)?.group(0) ?? '')?.clamp(1, 5);
+  /// `Rating`'s actual Notion type isn't confirmed (unlike `Status`, which
+  /// is confirmed to be the dedicated `status` type, not `select` — see
+  /// `BookStatus`'s doc comment) — the original assumption that it's a
+  /// `select` whose option name is a run of stars ("⭐⭐⭐") was never
+  /// device-verified and NBLB-13 found ratings still not showing after that
+  /// path was wired up to the UI, so this now reads whichever of `select`,
+  /// plain `number`, `formula`, or `rollup` the property actually is,
+  /// instead of assuming one shape.
+  int? _parseRating(Map<String, dynamic>? ratingProperty) {
+    if (ratingProperty == null) return null;
+    final selectName = (ratingProperty['select'] as Map<String, dynamic>?)?['name'] as String?;
+    if (selectName != null) {
+      final fromText = _parseRatingText(selectName);
+      if (fromText != null) return fromText;
+    }
+    final number = ratingProperty['number'] as num?;
+    if (number != null) return number.round().clamp(1, 5);
+    final formula = ratingProperty['formula'] as Map<String, dynamic>?;
+    if (formula != null) {
+      final formulaNumber = formula['number'] as num?;
+      if (formulaNumber != null) return formulaNumber.round().clamp(1, 5);
+      final fromText = _parseRatingText(formula['string'] as String?);
+      if (fromText != null) return fromText;
+    }
+    final rollupNumber = ((ratingProperty['rollup'] as Map<String, dynamic>?)?['number']) as num?;
+    if (rollupNumber != null) return rollupNumber.round().clamp(1, 5);
+    return null;
   }
 
-  String? _selectName(Map<String, dynamic>? selectProperty) {
-    final select = selectProperty?['select'] as Map<String, dynamic>?;
-    return select?['name'] as String?;
+  int? _parseRatingText(String? text) {
+    if (text == null) return null;
+    final stars = '⭐'.allMatches(text).length;
+    if (stars > 0) return stars.clamp(1, 5);
+    return int.tryParse(RegExp(r'\d').firstMatch(text)?.group(0) ?? '')?.clamp(1, 5);
   }
 
   String _plainTitle(Map<String, dynamic> withTitle) {

@@ -112,6 +112,15 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun texte lisible sur cette couverture — réessayez ou recherchez manuellement.';
 
   @override
+  String get scanCoverPrompt =>
+      'Touchez le déclencheur pour ouvrir votre appareil photo et prendre la couverture du livre.';
+
+  @override
+  String scanDebugInfo(int count, String info) {
+    return 'Détections : $count • dernier : $info';
+  }
+
+  @override
   String scannedCount(int count) {
     return '$count scannés';
   }

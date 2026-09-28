@@ -30,9 +30,13 @@ enum _ScanMode { barcode, cover }
 /// delivers a frame — that was the root cause of the recurring "cover capture
 /// times out" bugs (NBLB-3/7/9/10). Cover mode instead stops the scanner and
 /// opens the native camera via `image_picker`, then runs on-device OCR on the
-/// resulting file (NBLB-12). The scanner stays a single controller (see
-/// NBLB-6). Camera capture can't be exercised on `flutter run -d windows`
-/// (see `CLAUDE.md`).
+/// resulting file (NBLB-12). `MobileScanner` itself stays continuously
+/// mounted in both modes — cover mode just covers it with an opaque static
+/// prompt instead of unmounting it, since unmounting/remounting it re-runs
+/// its own start/stop lifecycle on the same controller and NBLB-6 already
+/// found that race-prone (NBLB-13). The scanner also stays a single
+/// controller (NBLB-6). Camera capture can't be exercised on
+/// `flutter run -d windows` (see `CLAUDE.md`).
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
 
@@ -57,6 +61,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   Timer? _hintTimer;
   StreamSubscription<BarcodeCapture>? _subscription;
   final _picker = ImagePicker();
+
+  // On-screen detection diagnostics — the only way to see what Vision is
+  // actually reporting on-device without a Mac console (NBLB-13). Remove
+  // once barcode detection is confirmed working reliably again.
+  int _detectionCount = 0;
+  String? _lastDetectionDebug;
 
   @override
   void initState() {
@@ -91,14 +101,21 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   void _onCapture(BarcodeCapture capture) {
     if (_mode != _ScanMode.barcode || _busy) return;
     if (capture.barcodes.isEmpty) return;
+    // Log every raw detection (format + value + length), not just ones that
+    // pass the ISBN filter below, and mirror it on-screen (`_lastDetectionDebug`)
+    // since debugPrint output isn't visible on a device without a Mac console
+    // — this is the only way to tell, from the next on-device run, whether
+    // Vision is detecting nothing at all vs. detecting something the filter
+    // then rejects (e.g. a shorter/longer payload than a plain EAN-13, or a
+    // non-EAN format).
+    final first = capture.barcodes.first;
+    debugPrint('ScanScreen: detected barcode format=${first.format} raw=${first.rawValue}');
+    setState(() {
+      _detectionCount++;
+      _lastDetectionDebug = '${first.format.name} "${first.rawValue ?? ''}" (len ${first.rawValue?.length ?? 0})';
+    });
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
-      // Log every raw detection (format + value + length), not just ones
-      // that pass the ISBN filter below — this is the only way to tell,
-      // from a future device run, whether Vision is detecting nothing at
-      // all vs. detecting something the filter then rejects (e.g. a
-      // shorter/longer payload than a plain EAN-13, or a non-EAN format).
-      debugPrint('ScanScreen: detected barcode format=${barcode.format} raw=$raw');
       if (raw == null) continue;
       if (!(raw.startsWith('978') || raw.startsWith('979')) || raw.length != 13) continue;
       if (!_recentIsbns.add(raw)) continue;
@@ -215,6 +232,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                       return Stack(
                         alignment: Alignment.center,
                         children: [
+                          // Stays mounted in both modes — see the class doc
+                          // comment for why (NBLB-13).
                           MobileScanner(
                             controller: _controller,
                             errorBuilder: (context, error) {
@@ -231,38 +250,81 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                               );
                             },
                           ),
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: tokens.accent.withValues(alpha: 0.7), width: 2),
-                              borderRadius: BorderRadius.circular(AppSpacing.settingsCardRadius),
-                            ),
-                            // Cover mode frames a portrait book cover, not a
-                            // square barcode target — a square guide made it
-                            // hard to center a rectangular cover.
-                            width: _mode == _ScanMode.cover ? 190 : 220,
-                            height: _mode == _ScanMode.cover ? 270 : 220,
-                          ),
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: ValueListenableBuilder<MobileScannerState>(
-                              valueListenable: _controller,
-                              builder: (context, state, _) {
-                                final torchOn = state.torchState == TorchState.on;
-                                return GestureDetector(
-                                  onTap: () => _controller.toggleTorch(),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: torchOn ? tokens.accent : Colors.black.withValues(alpha: 0.4),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(torchOn ? Icons.flash_on : Icons.flash_off, color: Colors.white, size: 20),
+                          if (_mode == _ScanMode.cover)
+                            // Opaque cover over the live feed above — tapping
+                            // the shutter opens iOS's own camera, so showing
+                            // Shelf's live feed right up to that moment made
+                            // it look like two cameras stacked on each other
+                            // (NBLB-13).
+                            Positioned.fill(
+                              child: Container(
+                                color: const Color(0xFF0a0a0a),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.menu_book_rounded, size: 48, color: tokens.accent),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        l10n.scanCoverPrompt,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(color: Colors.white70, fontSize: 13.5),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              },
+                                ),
+                              ),
                             ),
-                          ),
+                          if (_mode == _ScanMode.barcode) ...[
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: tokens.accent.withValues(alpha: 0.7), width: 2),
+                                borderRadius: BorderRadius.circular(AppSpacing.settingsCardRadius),
+                              ),
+                              width: 220,
+                              height: 220,
+                            ),
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: ValueListenableBuilder<MobileScannerState>(
+                                valueListenable: _controller,
+                                builder: (context, state, _) {
+                                  final torchOn = state.torchState == TorchState.on;
+                                  return GestureDetector(
+                                    onTap: () => _controller.toggleTorch(),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: torchOn ? tokens.accent : Colors.black.withValues(alpha: 0.4),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(torchOn ? Icons.flash_on : Icons.flash_off, color: Colors.white, size: 20),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            if (_showHint)
+                              Positioned(
+                                bottom: 20,
+                                child: Text(
+                                  l10n.scanHint,
+                                  style: TextStyle(color: tokens.accent, fontSize: 13, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            // Temporary on-device diagnostics — see
+                            // `_detectionCount`'s doc comment.
+                            Positioned(
+                              bottom: 46,
+                              child: Text(
+                                l10n.scanDebugInfo(_detectionCount, _lastDetectionDebug ?? '—'),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white38, fontSize: 10.5),
+                              ),
+                            ),
+                          ],
                           if (_mode == _ScanMode.cover)
                             Positioned(
                               bottom: 20,
@@ -280,14 +342,6 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                                       ? const Padding(padding: EdgeInsets.all(18), child: CircularProgressIndicator(strokeWidth: 2))
                                       : null,
                                 ),
-                              ),
-                            ),
-                          if (_showHint)
-                            Positioned(
-                              bottom: _mode == _ScanMode.cover ? 96 : 20,
-                              child: Text(
-                                l10n.scanHint,
-                                style: TextStyle(color: tokens.accent, fontSize: 13, fontWeight: FontWeight.w600),
                               ),
                             ),
                         ],

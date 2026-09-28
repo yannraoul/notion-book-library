@@ -48,6 +48,11 @@
     "placeholders": {"message": {"type": "String"}}
   },
   "scanCoverNoText": "Aucun texte lisible sur cette couverture — réessayez ou recherchez manuellement.",
+  "scanCoverPrompt": "Touchez le déclencheur pour ouvrir votre appareil photo et prendre la couverture du livre.",
+  "scanDebugInfo": "Détections : {count} • dernier : {info}",
+  "@scanDebugInfo": {
+    "placeholders": {"count": {"type": "int"}, "info": {"type": "String"}}
+  },
 
   "scannedCount": "{count} scannés",
   "@scannedCount": {

@@ -48,6 +48,11 @@
     "placeholders": {"message": {"type": "String"}}
   },
   "scanCoverNoText": "Couldn't read any text on that cover — try again or search manually.",
+  "scanCoverPrompt": "Tap the shutter to open your camera and take a photo of the book's front cover.",
+  "scanDebugInfo": "Detections: {count} • last: {info}",
+  "@scanDebugInfo": {
+    "placeholders": {"count": {"type": "int"}, "info": {"type": "String"}}
+  },
 
   "scannedCount": "{count} scanned",
   "@scannedCount": {

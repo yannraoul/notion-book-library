@@ -284,6 +284,18 @@ abstract class AppLocalizations {
   /// **'Couldn\'t read any text on that cover — try again or search manually.'**
   String get scanCoverNoText;
 
+  /// No description provided for @scanCoverPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the shutter to open your camera and take a photo of the book\'s front cover.'**
+  String get scanCoverPrompt;
+
+  /// No description provided for @scanDebugInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Detections: {count} • last: {info}'**
+  String scanDebugInfo(int count, String info);
+
   /// No description provided for @scannedCount.
   ///
   /// In en, this message translates to:
