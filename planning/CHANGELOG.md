@@ -25,3 +25,4 @@ is just the index.
 - [NBLB-9](bugs/NBLB-9.md) — cover-photo capture regressed to always failing (regression from NBLB-8)
 - [NBLB-10](bugs/NBLB-10.md) — cover capture still hangs then fails; added direct search as a fallback entry point
 - [NBLB-11](bugs/NBLB-11.md) — SideStore install failed: `CFBundleName` underscores rejected as Apple App ID name
+- [NBLB-12](bugs/NBLB-12.md) — cover capture timeout root cause (iOS only emits frames on barcode hit); barcode scanWindow removed

@@ -411,7 +411,7 @@ class NotionApi {
       currentPage: (props['Current page']?['number'] as num?)?.toDouble(),
       dateStarted: dateStarted != null ? DateTime.parse(dateStarted) : null,
       dateFinished: dateFinished != null ? DateTime.parse(dateFinished) : null,
-      rating: _selectName(props['Rating'])?.length,
+      rating: _parseRating(_selectName(props['Rating'])),
     );
   }
 
@@ -439,6 +439,15 @@ class NotionApi {
       'external' => (file['external'] as Map<String, dynamic>?)?['url'] as String?,
       _ => null,
     };
+  }
+
+  /// `Rating` is a select whose option name is a run of stars ("⭐⭐⭐") —
+  /// also accepts a plain "3"/"3/5" in case Habits ever changes format.
+  int? _parseRating(String? name) {
+    if (name == null) return null;
+    final stars = '⭐'.allMatches(name).length;
+    if (stars > 0) return stars.clamp(1, 5);
+    return int.tryParse(RegExp(r'\d').firstMatch(name)?.group(0) ?? '')?.clamp(1, 5);
   }
 
   String? _selectName(Map<String, dynamic>? selectProperty) {

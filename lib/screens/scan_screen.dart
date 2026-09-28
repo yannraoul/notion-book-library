@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../l10n/app_localizations.dart';
@@ -22,21 +22,17 @@ import 'queue_screen.dart';
 
 enum _ScanMode { barcode, cover }
 
-/// Design screens 03/04 — the scan viewfinder. A single
-/// [MobileScannerController] (`returnImage: true`) serves both modes:
-/// barcode mode reads `capture.barcodes` (fires on every analyzed frame,
-/// confirmed by reading the package source — not just on a hit),
-/// cover-photo mode waits for the next frame delivered *after* a capture
-/// tap (not whatever frame the analyzer last cached — see NBLB-7) and
-/// runs on-device OCR on its `capture.image` bytes. This *must* stay a single
-/// controller: `MobileScannerController` holds the native camera session
-/// through a process-wide static owner field (confirmed by reading the
-/// package source), so starting a second controller before the first has
-/// fully released it throws "already running" — tried splitting this into
-/// a controller per mode to avoid the `returnImage` cost in barcode mode,
-/// and that's exactly what broke (see NBLB-6). Camera capture itself can't
-/// be exercised on `flutter run -d windows` (see `CLAUDE.md`) — unverified
-/// until the Codemagic/Sideloadly loop.
+/// Design screens 03/04 — the scan viewfinder. Barcode mode reads
+/// `MobileScannerController.barcodes`. Cover-photo mode does NOT use that
+/// stream for its image: on iOS, `mobile_scanner` only emits an event when
+/// Vision actually finds a barcode (`if results.isEmpty { return }` in the
+/// plugin's `captureOutput`), so a cover with no barcode in view never
+/// delivers a frame — that was the root cause of the recurring "cover capture
+/// times out" bugs (NBLB-3/7/9/10). Cover mode instead stops the scanner and
+/// opens the native camera via `image_picker`, then runs on-device OCR on the
+/// resulting file (NBLB-12). The scanner stays a single controller (see
+/// NBLB-6). Camera capture can't be exercised on `flutter run -d windows`
+/// (see `CLAUDE.md`).
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
 
@@ -45,14 +41,11 @@ class ScanScreen extends ConsumerStatefulWidget {
 }
 
 class _ScanScreenState extends ConsumerState<ScanScreen> {
-  // Reverted NBLB-8's `formats: [BarcodeFormat.ean13]` restriction (see
-  // NBLB-9) — cover-mode capture started failing outright right after that
-  // change landed, and cover mode shares this same controller/analysis
-  // pipeline even though it doesn't care about barcode formats at all.
-  // Wasn't expected to help barcode detection much anyway (mobile_scanner's
-  // own default is already "detect everything"); not worth the risk of it
-  // being what's starving cover mode of frames.
-  final _controller = MobileScannerController(returnImage: true);
+  // No `scanWindow`/`formats` restriction: Vision's `regionOfInterest` needs
+  // the whole barcode inside the window, and the 220pt window added in NBLB-8
+  // is the likely cause of previously-scannable barcodes going undetected
+  // (NBLB-12). The on-screen guide box is cosmetic only.
+  final _controller = MobileScannerController();
   final _lookupService = BookLookupService();
   final _textRecognizer = TextRecognizer();
   final _recentIsbns = <String>{};
@@ -63,7 +56,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   bool _busy = false;
   Timer? _hintTimer;
   StreamSubscription<BarcodeCapture>? _subscription;
-  Completer<BarcodeCapture>? _freshFrameRequest;
+  final _picker = ImagePicker();
 
   @override
   void initState() {
@@ -96,10 +89,6 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   void _onCapture(BarcodeCapture capture) {
-    final pendingFrame = _freshFrameRequest;
-    if (pendingFrame != null && !pendingFrame.isCompleted) {
-      pendingFrame.complete(capture);
-    }
     if (_mode != _ScanMode.barcode || _busy) return;
     if (capture.barcodes.isEmpty) return;
     for (final barcode in capture.barcodes) {
@@ -146,22 +135,16 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      // Wait for a frame delivered strictly after this tap, instead of
-      // reusing whatever the analyzer last cached: frame delivery is
-      // throttled (`detectionTimeoutMs`), so a cached frame from just
-      // before a quick reframe/mode-switch could otherwise still show
-      // whatever the camera was pointed at a moment earlier.
-      final request = Completer<BarcodeCapture>();
-      _freshFrameRequest = request;
-      final capture = await request.future.timeout(const Duration(seconds: 5));
-      final image = capture.image;
-      if (image == null) throw StateError('captured frame had no image bytes');
-
-      final file = await File(
-        '${Directory.systemTemp.path}/shelf_cover_${DateTime.now().microsecondsSinceEpoch}.jpg',
-      ).writeAsBytes(image);
-      final recognized = await _textRecognizer.processImage(InputImage.fromFilePath(file.path));
-      await file.delete();
+      // The live scanner holds the camera session; release it before the
+      // native camera opens, and resume it afterwards.
+      await _controller.stop();
+      final photo = await _picker.pickImage(source: ImageSource.camera, maxWidth: 2000, imageQuality: 85);
+      unawaited(_controller.start().catchError((Object e) => debugPrint('ScanScreen: camera restart failed: $e')));
+      if (photo == null) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      final recognized = await _textRecognizer.processImage(InputImage.fromFilePath(photo.path));
       if (!mounted) return;
       setState(() => _busy = false);
       final guess = recognized.text.trim();
@@ -177,32 +160,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         setState(() => _busy = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scanCoverCaptureFailed('$e'))));
       }
-    } finally {
-      _freshFrameRequest = null;
     }
   }
 
   void _setMode(_ScanMode mode) {
     setState(() => _mode = mode);
     _armHintTimer();
-    if (mode == _ScanMode.cover) {
-      // A barcode-mode session that never finds anything can leave
-      // mobile_scanner's native frame-analysis loop stuck — no further
-      // frames get delivered at all, even after switching modes, which is
-      // what made cover capture hang for the full timeout then fail
-      // (NBLB-9 didn't fully explain it). A stop/start cycle forces a
-      // clean analyzer state before the user gets a chance to tap capture.
-      unawaited(_restartCamera());
-    }
-  }
-
-  Future<void> _restartCamera() async {
-    try {
-      await _controller.stop();
-      await _controller.start();
-    } catch (e) {
-      debugPrint('ScanScreen: camera restart on mode switch failed: $e');
-    }
   }
 
   @override
@@ -249,20 +212,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      // Barcode mode restricts native analysis to the same
-                      // rect the guide box shows — excludes surrounding
-                      // clutter/glare instead of scanning the full frame.
-                      // Cover mode needs the whole frame (OCR reads more
-                      // than what's in the guide), so no window there.
-                      final scanWindow = _mode == _ScanMode.barcode
-                          ? Rect.fromCenter(center: constraints.biggest.center(Offset.zero), width: 220, height: 220)
-                          : null;
                       return Stack(
                         alignment: Alignment.center,
                         children: [
                           MobileScanner(
                             controller: _controller,
-                            scanWindow: scanWindow,
                             errorBuilder: (context, error) {
                               debugPrint('ScanScreen: camera init error: ${error.errorCode} ${error.errorDetails?.message}');
                               return Center(

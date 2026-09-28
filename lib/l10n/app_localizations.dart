@@ -644,6 +644,12 @@ abstract class AppLocalizations {
   /// **'Page'**
   String get currentPageLabel;
 
+  /// No description provided for @ratingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get ratingLabel;
+
   /// No description provided for @statusNotStarted.
   ///
   /// In en, this message translates to:

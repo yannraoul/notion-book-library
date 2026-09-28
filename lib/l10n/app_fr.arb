@@ -144,6 +144,7 @@
   "readingOwnedNote": "Géré par Habits — jamais modifié ici",
   "statusLabel": "Statut",
   "currentPageLabel": "Page",
+  "ratingLabel": "Note",
   "statusNotStarted": "Pas commencé",
   "pageDash": "—",
   "markAsBought": "Marquer comme acheté",

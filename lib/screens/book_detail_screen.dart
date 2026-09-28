@@ -490,6 +490,26 @@ class _BookDetailScreenState extends ConsumerState<BookDetailScreen> {
                             ),
                           ],
                         ),
+                        if (_book.reading?.rating != null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(l10n.ratingLabel, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: List.generate(
+                                  5,
+                                  (i) => Icon(
+                                    i < _book.reading!.rating! ? Icons.star_rounded : Icons.star_outline_rounded,
+                                    size: 18,
+                                    color: i < _book.reading!.rating! ? tokens.accent : Colors.white38,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                         if (_book.reading?.status == BookStatus.wishlist) ...[
                           const SizedBox(height: AppSpacing.cardRowGap),
                           SizedBox(

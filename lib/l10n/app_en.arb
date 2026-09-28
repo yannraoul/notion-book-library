@@ -144,6 +144,7 @@
   "readingOwnedNote": "Owned by Habits — Shelf never edits these",
   "statusLabel": "Status",
   "currentPageLabel": "Page",
+  "ratingLabel": "Rating",
   "statusNotStarted": "Not started",
   "pageDash": "—",
   "markAsBought": "Mark as bought",

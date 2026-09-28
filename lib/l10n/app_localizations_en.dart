@@ -309,6 +309,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentPageLabel => 'Page';
 
   @override
+  String get ratingLabel => 'Rating';
+
+  @override
   String get statusNotStarted => 'Not started';
 
   @override
