@@ -2,18 +2,26 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-/// Thin wrapper over the Google Books API — no key required for basic
-/// volume search (per `docs/Backlog shelf.md`), used as the primary
-/// source in the identification pipeline for its cleaner category data.
-/// Note: the anonymous quota is shared per-IP and can be exhausted
-/// (confirmed during development) — [BookLookupService] falls back to
-/// Open Library whenever this comes back empty or thin.
+import 'google_books_api_key_storage.dart';
+
+/// Thin wrapper over the Google Books API. `docs/Backlog shelf.md`
+/// originally chose no-key usage for basic volume search, but NBLB-15
+/// found that anonymous/keyless quota shared globally across every app
+/// that skips a key, and easily exhausted (confirmed: every ISBN tried
+/// during that investigation came back 429). An API key is optional —
+/// entered once in Settings, read fresh on every request from
+/// [GoogleBooksApiKeyStorage] — but strongly improves reliability.
+/// [BookLookupService] falls back to Open Library whenever this comes
+/// back empty or thin, key or no key.
 class GoogleBooksApi {
   static const _baseUrl = 'https://www.googleapis.com/books/v1/volumes';
 
   final http.Client _client;
+  final GoogleBooksApiKeyStorage _keyStorage;
 
-  GoogleBooksApi({http.Client? client}) : _client = client ?? http.Client();
+  GoogleBooksApi({http.Client? client, GoogleBooksApiKeyStorage? keyStorage})
+      : _client = client ?? http.Client(),
+        _keyStorage = keyStorage ?? GoogleBooksApiKeyStorage();
 
   Future<GoogleBooksVolume?> lookupIsbn(String isbn) async {
     final results = await _query('isbn:$isbn');
@@ -23,9 +31,11 @@ class GoogleBooksApi {
   Future<List<GoogleBooksVolume>> search(String query) => _query(query, maxResults: 5);
 
   Future<List<GoogleBooksVolume>> _query(String q, {int maxResults = 1}) async {
+    final key = await _keyStorage.read();
     final uri = Uri.parse(_baseUrl).replace(queryParameters: {
       'q': q,
       'maxResults': '$maxResults',
+      if (key != null && key.isNotEmpty) 'key': key,
     });
     final response = await _client.get(uri);
     if (response.statusCode != 200) return const [];

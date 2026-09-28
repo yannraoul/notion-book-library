@@ -412,6 +412,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'No databases shared with this integration yet.';
 
   @override
+  String get settingsGoogleBooksKey => 'Google Books API key';
+
+  @override
+  String get settingsGoogleBooksKeyBody =>
+      'Optional, but recommended — Google Books\' free lookup quota is shared by every app that skips a key and is easily exhausted. A free key from Google Cloud Console (enable the Books API) makes barcode-scan lookups far more reliable.';
+
+  @override
+  String get settingsGoogleBooksKeyHint => 'Paste your API key';
+
+  @override
+  String get settingsGoogleBooksKeySave => 'Save';
+
+  @override
+  String get settingsGoogleBooksKeySaved => 'API key saved';
+
+  @override
+  String get settingsGoogleBooksKeyChange => 'Change';
+
+  @override
+  String get settingsGoogleBooksKeyRemove => 'Remove';
+
+  @override
   String get settingsPreferences => 'Preferences';
 
   @override

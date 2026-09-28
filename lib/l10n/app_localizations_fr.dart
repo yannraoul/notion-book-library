@@ -415,6 +415,28 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune base de données partagée avec cette intégration.';
 
   @override
+  String get settingsGoogleBooksKey => 'Clé API Google Books';
+
+  @override
+  String get settingsGoogleBooksKeyBody =>
+      'Facultatif, mais recommandé — le quota gratuit de Google Books est partagé par toutes les applications qui l\'utilisent sans clé, et il s\'épuise facilement. Une clé gratuite depuis Google Cloud Console (en activant l\'API Books) rend les recherches par code-barres bien plus fiables.';
+
+  @override
+  String get settingsGoogleBooksKeyHint => 'Collez votre clé API';
+
+  @override
+  String get settingsGoogleBooksKeySave => 'Enregistrer';
+
+  @override
+  String get settingsGoogleBooksKeySaved => 'Clé API enregistrée';
+
+  @override
+  String get settingsGoogleBooksKeyChange => 'Modifier';
+
+  @override
+  String get settingsGoogleBooksKeyRemove => 'Supprimer';
+
+  @override
   String get settingsPreferences => 'Préférences';
 
   @override

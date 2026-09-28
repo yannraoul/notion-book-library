@@ -830,6 +830,48 @@ abstract class AppLocalizations {
   /// **'No databases shared with this integration yet.'**
   String get settingsNoDatabasesFound;
 
+  /// No description provided for @settingsGoogleBooksKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Books API key'**
+  String get settingsGoogleBooksKey;
+
+  /// No description provided for @settingsGoogleBooksKeyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional, but recommended — Google Books\' free lookup quota is shared by every app that skips a key and is easily exhausted. A free key from Google Cloud Console (enable the Books API) makes barcode-scan lookups far more reliable.'**
+  String get settingsGoogleBooksKeyBody;
+
+  /// No description provided for @settingsGoogleBooksKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste your API key'**
+  String get settingsGoogleBooksKeyHint;
+
+  /// No description provided for @settingsGoogleBooksKeySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get settingsGoogleBooksKeySave;
+
+  /// No description provided for @settingsGoogleBooksKeySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'API key saved'**
+  String get settingsGoogleBooksKeySaved;
+
+  /// No description provided for @settingsGoogleBooksKeyChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get settingsGoogleBooksKeyChange;
+
+  /// No description provided for @settingsGoogleBooksKeyRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get settingsGoogleBooksKeyRemove;
+
   /// No description provided for @settingsPreferences.
   ///
   /// In en, this message translates to:

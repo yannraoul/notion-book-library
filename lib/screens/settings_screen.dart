@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/locale_provider.dart';
 import '../providers/notion_connection_provider.dart';
 import '../providers/theme_provider.dart';
+import '../services/google_books_api_key_storage.dart';
 import '../services/notion_api.dart';
 import '../theme/color_tokens.dart';
 import '../theme/spacing.dart';
@@ -48,6 +49,14 @@ class SettingsScreen extends ConsumerWidget {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: _NotionConnectionCard(),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+              child: Text(l10n.settingsGoogleBooksKey.toUpperCase(), style: AppTypography.sectionLabel(tokens.muted)),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: _GoogleBooksKeyCard(),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
@@ -379,6 +388,160 @@ class _ConnectingBody extends StatelessWidget {
         const SizedBox(width: 12),
         Text(l10n.settingsConnecting, style: AppTypography.bodyMuted(tokens.muted)),
       ],
+    );
+  }
+}
+
+/// NBLB-15: optional Google Books API key, stored via
+/// [GoogleBooksApiKeyStorage] the same way the Notion token is (platform
+/// keychain, never shown back once saved — only whether one is set).
+class _GoogleBooksKeyCard extends ConsumerStatefulWidget {
+  const _GoogleBooksKeyCard();
+
+  @override
+  ConsumerState<_GoogleBooksKeyCard> createState() => _GoogleBooksKeyCardState();
+}
+
+class _GoogleBooksKeyCardState extends ConsumerState<_GoogleBooksKeyCard> {
+  final _storage = GoogleBooksApiKeyStorage();
+  final _controller = TextEditingController();
+  bool _loading = true;
+  bool _hasKey = false;
+  bool _editing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final key = await _storage.read();
+    if (!mounted) return;
+    setState(() {
+      _hasKey = key != null && key.isNotEmpty;
+      _loading = false;
+    });
+  }
+
+  Future<void> _save() async {
+    final key = _controller.text.trim();
+    if (key.isEmpty) return;
+    await _storage.write(key);
+    _controller.clear();
+    if (!mounted) return;
+    setState(() {
+      _hasKey = true;
+      _editing = false;
+    });
+  }
+
+  Future<void> _remove() async {
+    await _storage.clear();
+    if (!mounted) return;
+    setState(() => _hasKey = false);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = ref.watch(colorTokensProvider(MediaQuery.platformBrightnessOf(context)));
+    final l10n = AppLocalizations.of(context)!;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.cardPaddingVertical,
+        horizontal: AppSpacing.cardPaddingHorizontal,
+      ),
+      decoration: BoxDecoration(
+        color: tokens.surface,
+        border: Border.all(color: tokens.border, width: 1),
+        borderRadius: BorderRadius.circular(AppSpacing.settingsCardRadius),
+      ),
+      child: _loading
+          ? SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2, color: tokens.accent),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.settingsGoogleBooksKeyBody, style: AppTypography.bodyMuted(tokens.muted)),
+                const SizedBox(height: 12),
+                if (_hasKey && !_editing) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.settingsGoogleBooksKeySaved,
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: tokens.text),
+                        ),
+                      ),
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(color: _connectedDotColor, shape: BoxShape.circle),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => setState(() => _editing = true),
+                        child: Text(
+                          l10n.settingsGoogleBooksKeyChange,
+                          style: AppTypography.rowSubtitle(tokens.accent).copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      GestureDetector(
+                        onTap: _remove,
+                        child: Text(
+                          l10n.settingsGoogleBooksKeyRemove,
+                          style: AppTypography.rowSubtitle(tokens.alert).copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  TextField(
+                    controller: _controller,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: l10n.settingsGoogleBooksKeyHint,
+                      hintStyle: AppTypography.bodyMuted(tokens.muted),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: GestureDetector(
+                      onTap: _save,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: tokens.accent,
+                          borderRadius: BorderRadius.circular(AppSpacing.stepperButtonRadius),
+                        ),
+                        child: Text(
+                          l10n.settingsGoogleBooksKeySave,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
     );
   }
 }
