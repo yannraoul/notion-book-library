@@ -115,6 +115,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tap the shutter to open your camera and take a photo of the book\'s front cover.';
 
   @override
+  String scanIsbnNotFound(String isbn) {
+    return 'Found ISBN $isbn, but couldn\'t identify this edition — try \"Cover photo\" or search manually.';
+  }
+
+  @override
+  String scanIsbnLookupError(String isbn, String message) {
+    return 'Found ISBN $isbn, but the lookup failed: $message';
+  }
+
+  @override
   String scanDebugInfo(int count, String info) {
     return 'Detections: $count • last: $info';
   }

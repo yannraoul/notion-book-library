@@ -290,6 +290,18 @@ abstract class AppLocalizations {
   /// **'Tap the shutter to open your camera and take a photo of the book\'s front cover.'**
   String get scanCoverPrompt;
 
+  /// No description provided for @scanIsbnNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Found ISBN {isbn}, but couldn\'t identify this edition — try \"Cover photo\" or search manually.'**
+  String scanIsbnNotFound(String isbn);
+
+  /// No description provided for @scanIsbnLookupError.
+  ///
+  /// In en, this message translates to:
+  /// **'Found ISBN {isbn}, but the lookup failed: {message}'**
+  String scanIsbnLookupError(String isbn, String message);
+
   /// No description provided for @scanDebugInfo.
   ///
   /// In en, this message translates to:

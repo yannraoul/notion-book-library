@@ -129,11 +129,28 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
 
   Future<void> _lookupIsbn(String isbn) async {
     setState(() => _busy = true);
-    final result = await _lookupService.lookupIsbn(isbn);
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (result == null) return;
-    _addToQueue(result);
+    try {
+      // A `null` result here means the barcode *was* read correctly but
+      // neither Google Books nor Open Library has a matching ISBN — a
+      // real, fairly common outcome for regional/small-press editions, not
+      // a scanning failure. It used to fall through silently, with only
+      // the generic "No barcode found" hint left on screen — misleading,
+      // since a barcode plainly was found (NBLB-15).
+      final result = await _lookupService.lookupIsbn(isbn);
+      if (!mounted) return;
+      if (result == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scanIsbnNotFound(isbn))));
+        return;
+      }
+      _addToQueue(result);
+    } catch (e) {
+      debugPrint('ScanScreen: ISBN lookup failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.scanIsbnLookupError(isbn, '$e'))));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   void _addToQueue(BookLookupResult result) {

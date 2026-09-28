@@ -116,6 +116,16 @@ class AppLocalizationsFr extends AppLocalizations {
       'Touchez le déclencheur pour ouvrir votre appareil photo et prendre la couverture du livre.';
 
   @override
+  String scanIsbnNotFound(String isbn) {
+    return 'ISBN $isbn trouvé, mais impossible d\'identifier cette édition — essayez « Photo de couverture » ou recherchez manuellement.';
+  }
+
+  @override
+  String scanIsbnLookupError(String isbn, String message) {
+    return 'ISBN $isbn trouvé, mais la recherche a échoué : $message';
+  }
+
+  @override
   String scanDebugInfo(int count, String info) {
     return 'Détections : $count • dernier : $info';
   }

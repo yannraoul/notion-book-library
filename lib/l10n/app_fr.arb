@@ -49,6 +49,14 @@
   },
   "scanCoverNoText": "Aucun texte lisible sur cette couverture — réessayez ou recherchez manuellement.",
   "scanCoverPrompt": "Touchez le déclencheur pour ouvrir votre appareil photo et prendre la couverture du livre.",
+  "scanIsbnNotFound": "ISBN {isbn} trouvé, mais impossible d'identifier cette édition — essayez « Photo de couverture » ou recherchez manuellement.",
+  "@scanIsbnNotFound": {
+    "placeholders": {"isbn": {"type": "String"}}
+  },
+  "scanIsbnLookupError": "ISBN {isbn} trouvé, mais la recherche a échoué : {message}",
+  "@scanIsbnLookupError": {
+    "placeholders": {"isbn": {"type": "String"}, "message": {"type": "String"}}
+  },
   "scanDebugInfo": "Détections : {count} • dernier : {info}",
   "@scanDebugInfo": {
     "placeholders": {"count": {"type": "int"}, "info": {"type": "String"}}

@@ -28,3 +28,4 @@ is just the index.
 - [NBLB-12](bugs/NBLB-12.md) — cover capture timeout root cause (iOS only emits frames on barcode hit); barcode scanWindow removed
 - [NBLB-13](bugs/NBLB-13.md) — NBLB-12/NBLM-15 didn't hold on device: barcode diagnostics added, cover UX double-camera fixed, rating parsing broadened
 - [NBLB-14](bugs/NBLB-14.md) — cover capture now a true in-app camera (not iOS's Camera app); rating star character fixed (★ not ⭐)
+- [NBLB-15](bugs/NBLB-15.md) — barcode detection was fine all along; root cause was Google Books' keyless quota (currently 0) + a misleading "no barcode found" message on a real lookup miss
