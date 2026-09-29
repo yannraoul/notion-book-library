@@ -125,8 +125,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String scanDebugInfo(int count, String info) {
-    return 'Detections: $count • last: $info';
+  String scanDetectionCount(int count) {
+    return '$count detected';
   }
 
   @override

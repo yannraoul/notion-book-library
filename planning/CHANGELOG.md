@@ -29,3 +29,4 @@ is just the index.
 - [NBLB-13](bugs/NBLB-13.md) — NBLB-12/NBLM-15 didn't hold on device: barcode diagnostics added, cover UX double-camera fixed, rating parsing broadened
 - [NBLB-14](bugs/NBLB-14.md) — cover capture now a true in-app camera (not iOS's Camera app); rating star character fixed (★ not ⭐)
 - [NBLB-15](bugs/NBLB-15.md) — barcode detection was fine all along; root cause was Google Books' keyless quota (currently 0) + a misleading "no barcode found" message on a real lookup miss
+- [NBLB-16](bugs/NBLB-16.md) — scan-status chip restyled as a real feature (pill layout) instead of debug text; now replaces the "No barcode found" hint once something's detected

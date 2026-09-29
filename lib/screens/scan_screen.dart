@@ -44,10 +44,9 @@ class ScanScreen extends ConsumerStatefulWidget {
 }
 
 class _ScanScreenState extends ConsumerState<ScanScreen> {
-  // No `scanWindow`/`formats` restriction: Vision's `regionOfInterest` needs
-  // the whole barcode inside the window, and the 220pt window added in
-  // NBLB-8 is a candidate for why previously-scannable barcodes went
-  // undetected (NBLB-12) — still unconfirmed, see `_detectionCount`.
+  // No `scanWindow`/`formats` restriction — the 220pt window NBLB-8 once
+  // added was the actual reason previously-scannable barcodes went
+  // undetected (NBLB-12).
   final _controller = MobileScannerController();
   final _lookupService = BookLookupService();
   final _textRecognizer = TextRecognizer();
@@ -64,11 +63,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   bool _coverTorchOn = false;
   String? _coverCameraError;
 
-  // On-screen detection diagnostics — the only way to see what Vision is
-  // actually reporting on-device without a Mac console (NBLB-13). Remove
-  // once barcode detection is confirmed working reliably again.
+  // Live scan-status readout, shown once anything's been detected (see
+  // `_DetectionChip`) — started as an on-device diagnostic (NBLB-13, when
+  // barcode detection was under suspicion), kept as a real feature once it
+  // turned out detection was fine all along and Yann liked seeing
+  // confirmation of what was actually read (NBLB-15/NBLB-16).
   int _detectionCount = 0;
-  String? _lastDetectionDebug;
+  String? _lastFormat;
+  String? _lastRawValue;
 
   @override
   void initState() {
@@ -104,18 +106,12 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   void _onCapture(BarcodeCapture capture) {
     if (_mode != _ScanMode.barcode || _busy) return;
     if (capture.barcodes.isEmpty) return;
-    // Log every raw detection (format + value + length), not just ones that
-    // pass the ISBN filter below, and mirror it on-screen
-    // (`_lastDetectionDebug`) since debugPrint output isn't visible on a
-    // sideloaded device without a Mac console — this is the only way to
-    // tell, from the next on-device run, whether Vision is detecting
-    // nothing at all vs. detecting something the filter then rejects (e.g.
-    // a shorter/longer payload than a plain EAN-13, or a non-EAN format).
     final first = capture.barcodes.first;
     debugPrint('ScanScreen: detected barcode format=${first.format} raw=${first.rawValue}');
     setState(() {
       _detectionCount++;
-      _lastDetectionDebug = '${first.format.name} "${first.rawValue ?? ''}" (len ${first.rawValue?.length ?? 0})';
+      _lastFormat = first.format.name;
+      _lastRawValue = first.rawValue;
     });
     for (final barcode in capture.barcodes) {
       final raw = barcode.rawValue;
@@ -364,7 +360,18 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                               ),
                             ),
                           if (_mode == _ScanMode.barcode) ...[
-                            if (_showHint)
+                            // Once anything's been detected, the scan-status
+                            // chip is strictly more useful than the generic
+                            // hint below — it confirms scanning is working
+                            // and shows exactly what was read — so it
+                            // replaces the hint rather than stacking next to
+                            // it (NBLB-16).
+                            if (_detectionCount > 0)
+                              Positioned(
+                                bottom: 20,
+                                child: _DetectionChip(tokens: tokens, l10n: l10n, count: _detectionCount, format: _lastFormat, rawValue: _lastRawValue),
+                              )
+                            else if (_showHint)
                               Positioned(
                                 bottom: 20,
                                 child: Text(
@@ -372,20 +379,6 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                                   style: TextStyle(color: tokens.accent, fontSize: 13, fontWeight: FontWeight.w600),
                                 ),
                               ),
-                            // Temporary on-device diagnostics — see
-                            // `_detectionCount`'s doc comment.
-                            Positioned(
-                              bottom: 46,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(8)),
-                                child: Text(
-                                  l10n.scanDebugInfo(_detectionCount, _lastDetectionDebug ?? '—'),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                            ),
                           ],
                         ],
                       );
@@ -414,6 +407,50 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Live scan-status readout — how many barcodes have been read this
+/// session and the most recent one's format/value, so scanning success is
+/// visible in the moment rather than only once a book lands in the queue
+/// (NBLB-13/NBLB-16). Styled as a pill to match the header's
+/// [_ModeToggle]-adjacent "scanned" counter rather than looking like leftover
+/// debug output.
+class _DetectionChip extends StatelessWidget {
+  final AppColorTokens tokens;
+  final AppLocalizations l10n;
+  final int count;
+  final String? format;
+  final String? rawValue;
+
+  const _DetectionChip({required this.tokens, required this.l10n, required this.count, required this.format, required this.rawValue});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.scanDetectionCount(count),
+            style: TextStyle(color: tokens.accent, fontSize: 10.5, fontWeight: FontWeight.w700, letterSpacing: 0.4),
+          ),
+          if (rawValue != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              '${format?.toUpperCase() ?? ''}  $rawValue',
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, fontFeatures: [FontFeature.tabularFigures()]),
+            ),
+          ],
+        ],
       ),
     );
   }

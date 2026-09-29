@@ -57,9 +57,9 @@
   "@scanIsbnLookupError": {
     "placeholders": {"isbn": {"type": "String"}, "message": {"type": "String"}}
   },
-  "scanDebugInfo": "Detections: {count} • last: {info}",
-  "@scanDebugInfo": {
-    "placeholders": {"count": {"type": "int"}, "info": {"type": "String"}}
+  "scanDetectionCount": "{count} detected",
+  "@scanDetectionCount": {
+    "placeholders": {"count": {"type": "int"}}
   },
 
   "scannedCount": "{count} scanned",

@@ -302,11 +302,11 @@ abstract class AppLocalizations {
   /// **'Found ISBN {isbn}, but the lookup failed: {message}'**
   String scanIsbnLookupError(String isbn, String message);
 
-  /// No description provided for @scanDebugInfo.
+  /// No description provided for @scanDetectionCount.
   ///
   /// In en, this message translates to:
-  /// **'Detections: {count} • last: {info}'**
-  String scanDebugInfo(int count, String info);
+  /// **'{count} detected'**
+  String scanDetectionCount(int count);
 
   /// No description provided for @scannedCount.
   ///
